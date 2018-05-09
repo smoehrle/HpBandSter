@@ -57,8 +57,8 @@ for constructor in [RandomSearch, HyperBand, BOHB]:
     HB = constructor(
         run_id=run_id,
         configspace=config_space,
-        min_budget=9,
-        max_budget=243,
+        min_budget=1,
+        max_budget=100,
         nameserver=ns_host,
         nameserver_port=ns_port,
         ping_interval=3600
@@ -80,7 +80,7 @@ for constructor in [RandomSearch, HyperBand, BOHB]:
     for k in id2config.items():
         print("Key: {}".format(k))
 
-    incumbent_trajectory = res.get_incumbent_trajectory()
+    incumbent_trajectory = res.get_incumbent_trajectory(all_budgets=True)
 
     ids = incumbent_trajectory['config_ids']
     times = incumbent_trajectory['times_finished']
