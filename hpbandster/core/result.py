@@ -251,7 +251,7 @@ class Result(object):
 		all_runs = self.get_all_runs(only_largest_budget = not all_budgets)
 		
 		if not all_budgets:
-			all_runs = list(filter(lambda r: r.budget==res.HB_config['max_budget'], all_runs))
+			all_runs = list(filter(lambda r: r.budget==self.HB_config['max_budget'], all_runs))
 		
 		all_runs.sort(key=lambda r: r.time_stamps['finished'])
 		
