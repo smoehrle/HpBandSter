@@ -26,8 +26,8 @@ class MyWorker(Worker):
             the speed ups achievable with parallel workers.
         """
         z1, z2, z3 = 1, budget / 100, 1
-        cost = self.cost(z1, z2, z3)
-        time.sleep(cost)
+        #  cost = self.cost(z1, z2, z3)
+        #  time.sleep(cost)
 
         x1, x2 = config['x1'], config['x2']
         y = self.calc_noisy_branin(x1, x2, z1, z2, z3)
@@ -38,15 +38,15 @@ class MyWorker(Worker):
         })
 
     @staticmethod
-    def calc_noisy_branin(self, x1, x2, z1, z2, z3, noise_variance=0.05):
-        return self.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
+    def calc_noisy_branin(x1: float, x2: float, z1: float, z2: float, z3: float, noise_variance: float=0.05):
+        return MyWorker.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
 
     @staticmethod
-    def cost(self, z1: float, z2: float, z3: float) -> float:
+    def cost(z1: float, z2: float, z3: float) -> float:
         return 0.05 + (z1**3 * z2**2 * z3**1.5)
 
     @staticmethod
-    def calc_branin(x1, x2, z1=1, z2=1, z3=1):
+    def calc_branin(x1: float, x2: float, z1: float=1, z2: float=1, z3: float=1) -> float:
         a = 1
         b = 5.1 / (4 * np.pi**2) - 0.01 * (1 - z1)
         c = 5 / np.pi - 0.1 * (1 - z2)
