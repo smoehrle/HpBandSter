@@ -6,7 +6,6 @@ import math
 import random
 import itertools
 
-
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
 import util
@@ -31,6 +30,12 @@ run_id = '0'
 NS = hpns.NameServer(run_id=run_id, host='localhost', port=0)
 ns_host, ns_port = NS.start()
 
+connection = dict(
+    nameserver=ns_host,
+    nameserver_port=ns_port,
+    run_id=run_id,  # unique Hyperband run id
+)
+
 # Start a bunch of workers in some threads, just to show how it works.
 # On the cluster, each worker would run in a separate job and the nameserver
 # credentials have to be distributed.
@@ -40,64 +45,62 @@ x1 = random.uniform(-5, 10)
 x2 = random.uniform(0, 15)
 y = MyWorker.calc_branin(x1, x2)
 
-simulate_time = True
+config = dict(
+    configspace=config_space,
+    min_budget=1,
+    max_budget=100,
+)
 
-workers = []
-for i in range(num_workers):
-    w = MyWorker(
-        true_y=y,
-        nameserver=ns_host,
-        nameserver_port=ns_port,
-        run_id=run_id,  # unique Hyperband run id
-        id=i  # unique ID as all workers belong to the same process
-    )
-    w.run(background=True)
-    workers.append(w)
-
-
-for constructor in [RandomSearch, HyperBand, BOHB]:
-    print('Start {} run'.format(constructor))
-    HB = constructor(
-        run_id=run_id,
-        configspace=config_space,
-        min_budget=1,
-        max_budget=100,
-        nameserver=ns_host,
-        nameserver_port=ns_port,
-        ping_interval=3600
+# As baseline run the different algorithms
+for constructor in [HyperBand]:
+    util.start_worker(
+        num_workers,
+        {**connection, 'true_y': y}
     )
 
-    res = HB.run(3, min_n_workers=num_workers)
-    HB.shutdown()
+    res = util.run_hb(
+        constructor,
+        {**connection, **config, 'ping_interval': 3600},
+        num_workers)
 
-    id2config = res.get_id2config_mapping()
+    incumbent_trajectory = util.log_results(res, simulate_time=True)
 
-    print('A total of {} unique configurations where sampled.'.format(
-        len(id2config.keys())))
-    runs = sorted(res.get_all_runs(), key=lambda x: x.budget)
-    print('A total of {} runs where executed.'.format(len(runs)))
-    for b, r in itertools.groupby(runs, key=lambda x: x.budget):
-        print('Budget: {:3}, #Runs: {:3}'.format(b, sum([1 for _ in r])))
-    sum_ = sum([x.budget for x in runs])
-    print('Total budget: {}'.format(sum_))
-    for k in id2config.items():
-        print("Key: {}".format(k))
-
-
-    if simulate_time:
-        incumbent_trajectory = util.get_simulated_incumbent_trajectory(res, all_budgets=True)
-    else:
-        incumbent_trajectory = res.get_incumbent_trajectory(all_budgets=True)
-
-    ids = incumbent_trajectory['config_ids']
     times = incumbent_trajectory['times_finished']
-    budgets = incumbent_trajectory['budgets']
     losses = incumbent_trajectory['losses']
 
-    for i in range(len(ids)):
-        print("Id: ({0[0]}, {0[1]}, {0[2]:>2}), time: {1:>5.2f}, budget: {2:>5}, loss: {3:>5.2f}".format(ids[i], times[i], budgets[i], losses[i]))
-
     plt.plot(times, losses, label=str(constructor))
+
+
+def cost1(z1: float, z2: float, z3: float) -> float:
+    return 0.05 + (z1**3 * 1**2 * 1**1.5)
+
+
+def cost2(z1: float, z2: float, z3: float) -> float:
+    return 0.05 + (1**3 * z2**2 * 1**1.5)
+
+
+def cost3(z1: float, z2: float, z3: float) -> float:
+    return 0.05 + (1**3 * 1**2 * z3**1.5)
+
+# Test differentcost functions
+for cost_fun in [cost1, cost2, cost3]:
+    util.start_worker(
+        num_workers,
+        {**connection, 'true_y': y, 'cost': cost_fun}
+    )
+
+    res = util.run_hb(
+        HyperBand,
+        {**connection, **config, 'ping_interval': 3600},
+        num_workers)
+
+    incumbent_trajectory = util.log_results(res, simulate_time=True)
+
+    times = incumbent_trajectory['times_finished']
+    losses = incumbent_trajectory['losses']
+
+    plt.plot(times, losses, label=str(cost_fun))
+
 
 print("x1: {}, x2: {}, y: {}".format(x1, x2, y))
 
@@ -105,5 +108,3 @@ plt.xlabel('wall clock time [s]')
 plt.ylabel('incumbent loss')
 plt.legend()
 plt.show()
-
-HB.shutdown(shutdown_workers=True)

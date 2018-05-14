@@ -2,6 +2,8 @@ import time
 import numpy as np
 import random
 
+from typing import Callable
+
 from hpbandster.core.worker import Worker
 
 import logging
@@ -10,9 +12,10 @@ logging.basicConfig(level=logging.INFO)
 
 class MyWorker(Worker):
 
-    def __init__(self, true_y, *args, **kwargs):
+    def __init__(self, true_y: float, cost: Callable[[float, float, float], float], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.true_y = true_y
+        self.cost = cost if cost else self._cost
 
     def compute(self, config, budget, *args, **kwargs):
         """
@@ -25,16 +28,15 @@ class MyWorker(Worker):
             For dramatization, the function sleeps for one second, which emphasizes
             the speed ups achievable with parallel workers.
         """
-        z1, z2, z3 = 1, budget / 100, 1
-        #  cost = self.cost(z1, z2, z3)
-        #  time.sleep(cost)
+        z1 = z2 = z3 = budget / 100
+        cost = self.cost(z1, z2, z3)
 
         x1, x2 = config['x1'], config['x2']
         y = self.calc_noisy_branin(x1, x2, z1, z2, z3)
 
         return({
-            'loss': np.abs(self.true_y - y),   # this is the a mandatory field to run hyperband
-            'info': 'x1: {}, x2: {}, y: {}, y_t: {}'.format(x1, x2, y, self.true_y)     # can be used for any user-defined information - also mandatory
+            'loss': y,    # this is the a mandatory field to run hyperband
+            'info': cost  # can be used for any user-defined information - also mandatory
         })
 
     @staticmethod
@@ -42,7 +44,7 @@ class MyWorker(Worker):
         return MyWorker.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
 
     @staticmethod
-    def cost(z1: float, z2: float, z3: float) -> float:
+    def _cost(z1: float, z2: float, z3: float) -> float:
         return 0.05 + (z1**3 * z2**2 * z3**1.5)
 
     @staticmethod
