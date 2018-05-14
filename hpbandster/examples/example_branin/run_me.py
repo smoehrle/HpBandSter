@@ -9,6 +9,7 @@ import itertools
 
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
+import util
 from worker import MyWorker
 
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +39,8 @@ num_workers = 1
 x1 = random.uniform(-5, 10)
 x2 = random.uniform(0, 15)
 y = MyWorker.calc_branin(x1, x2)
+
+simulate_time = True
 
 workers = []
 for i in range(num_workers):
@@ -80,7 +83,11 @@ for constructor in [RandomSearch, HyperBand, BOHB]:
     for k in id2config.items():
         print("Key: {}".format(k))
 
-    incumbent_trajectory = res.get_incumbent_trajectory(all_budgets=True)
+
+    if simulate_time:
+        incumbent_trajectory = util.get_simulated_incumbent_trajectory(res, all_budgets=True)
+    else:
+        incumbent_trajectory = res.get_incumbent_trajectory(all_budgets=True)
 
     ids = incumbent_trajectory['config_ids']
     times = incumbent_trajectory['times_finished']
@@ -90,11 +97,7 @@ for constructor in [RandomSearch, HyperBand, BOHB]:
     for i in range(len(ids)):
         print("Id: ({0[0]}, {0[1]}, {0[2]:>2}), time: {1:>5.2f}, budget: {2:>5}, loss: {3:>5.2f}".format(ids[i], times[i], budgets[i], losses[i]))
 
-    plt.plot(
-        incumbent_trajectory['times_finished'],
-        incumbent_trajectory['losses'],
-        label=str(constructor)
-    )
+    plt.plot(times, losses, label=str(constructor))
 
 print("x1: {}, x2: {}, y: {}".format(x1, x2, y))
 
