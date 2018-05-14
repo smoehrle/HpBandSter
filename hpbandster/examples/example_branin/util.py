@@ -1,4 +1,8 @@
+import itertools
+
 from hpbandster.core.result import Result
+
+from worker import MyWorker
 
 
 def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
@@ -36,13 +40,13 @@ def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
 
     current_incumbent = float('inf')
     incumbent_budget = -float('inf')
-    total_budget = 0
+    total_budget = .0
 
     for r in all_runs:
         if r.loss is None:
             continue
 
-        total_budget += r.budget
+        total_budget += int(r.info)
         if ((r.budget == incumbent_budget and r.loss < current_incumbent) or
            (r.budget > incumbent_budget)):
             current_incumbent = r.loss
@@ -60,3 +64,58 @@ def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
         return_dict['losses'].append(return_dict['losses'][-1])
 
     return return_dict
+
+
+def start_worker(num_worker: int, worker_opts: dict) -> None:
+    if worker_opts.get('cost') is None:
+        worker_opts['cost'] = None
+    for i in range(num_worker):
+        w = MyWorker(id=i, **worker_opts)
+        w.run(background=True)
+
+
+def run_hb(constructor, constructor_opts: dict, num_worker: int, iterations: int=10) -> Result:
+    print('Start {} run'.format(constructor))
+    HB = constructor(**constructor_opts)
+    res = HB.run(iterations, min_n_workers=num_worker)
+    HB.shutdown(shutdown_workers=True)
+    return res
+
+
+def log_results(res: Result, *, simulate_time: bool) -> dict:
+    id2config = res.get_id2config_mapping()
+
+    # Log number of configurations
+    print('A total of {} unique configurations where sampled.'.format(
+        len(id2config.keys())))
+    runs = sorted(res.get_all_runs(), key=lambda x: x.budget)
+
+    # Log number of runs
+    print('A total of {} runs where executed.'.format(len(runs)))
+
+    # Log runs per budget
+    for b, r in itertools.groupby(runs, key=lambda x: x.budget):
+        print('Budget: {:3}, #Runs: {:3}'.format(b, sum([1 for _ in r])))
+
+    # Log total budget
+    sum_ = sum([x.budget for x in runs])
+    print('Total budget: {}'.format(sum_))
+
+    # Log configurations
+    for k in id2config.items():
+        print("Key: {}".format(k))
+
+    if simulate_time:
+        incumbent_trajectory = get_simulated_incumbent_trajectory(res, all_budgets=True)
+    else:
+        incumbent_trajectory = res.get_incumbent_trajectory(all_budgets=True)
+
+    ids = incumbent_trajectory['config_ids']
+    times = incumbent_trajectory['times_finished']
+    budgets = incumbent_trajectory['budgets']
+    losses = incumbent_trajectory['losses']
+
+    for i in range(len(ids)):
+        print("Id: ({0[0]}, {0[1]}, {0[2]:>2}), time: {1:>5.2f}, budget: {2:>5}, loss: {3:>5.2f}".format(ids[i], times[i], budgets[i], losses[i]))
+
+    return incumbent_trajectory
