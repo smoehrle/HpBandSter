@@ -9,7 +9,7 @@ import itertools
 from hpbandster.optimizers import BOHB, HyperBand, RandomSearch
 
 import util
-from worker import MyWorker
+from worker import BraninWorker
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,7 +43,7 @@ num_workers = 1
 
 x1 = random.uniform(-5, 10)
 x2 = random.uniform(0, 15)
-y = MyWorker.calc_branin(x1, x2)
+y = BraninWorker.calc_branin(x1, x2)
 
 config = dict(
     configspace=config_space,
