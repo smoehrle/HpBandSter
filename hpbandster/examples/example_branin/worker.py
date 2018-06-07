@@ -10,7 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-class MyWorker(Worker):
+class BraninWorker(Worker):
 
     def __init__(self, true_y: float, cost: Callable[[float, float, float], float], *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class MyWorker(Worker):
 
     @staticmethod
     def calc_noisy_branin(x1: float, x2: float, z1: float, z2: float, z3: float, noise_variance: float=0.05):
-        return MyWorker.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
+        return BraninWorker.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
 
     @staticmethod
     def _cost(z1: float, z2: float, z3: float) -> float:
