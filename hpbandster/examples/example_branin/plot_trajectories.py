@@ -1,3 +1,4 @@
+import os
 import glob
 import pickle
 
@@ -6,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def extract_results_to_pickle(results_object):
+def extract_result(results_object):
     """
         Returns the best configurations over time, but also returns the cummulative budget
 
@@ -31,6 +32,7 @@ def extract_results_to_pickle(results_object):
         'times_finished': [],
         'budgets': [],
         'losses': [],
+        'info': [],
         'test_losses': [],
         'cummulative_budget': [],
         'cummulative_cost': []
@@ -169,26 +171,28 @@ def plot_losses(incumbent_trajectories, title, regret=True, incumbent=None,
     return (fig, ax)
 
 
-def main():
+def load_trajectories(config_id, working_dir: str = '.'):
     df = pd.DataFrame()
-    directory, m = '.', 'results'
-    for fn in glob.glob(directory + '/' + m + '*.pkl'):
+    for fn in glob.glob(os.path.join(working_dir, 'results.{}*.pkl'.format(config_id))):
         with open(fn, 'rb') as fh:
-            datum = pickle.load(fh)
-            print(datum)
-            times = np.array(datum['cummulative_budget']) / datum['budgets'][-1]
-            tmp = pd.DataFrame({fn: datum['test_losses']}, index=times)
-
-            df = df.join(tmp, how='ouer')
-
+            result = pickle.load(fh)
+        datum = extract_result(result)
+        times = np.array(datum['cummulative_cost'])
+        print(fn, datum['test_losses'], times)
+        tmp = pd.DataFrame({fn: datum['losses']}, index=times)
+        df = df.join(tmp, how='outer')
     df = fill_trajectories(df)
 
-    all_trajectories = {
+    return {
         'time_stamps': np.array(df.index),
         'losses': np.array(df.T)
     }
 
-    plot_losses(all_trajectories, show=True)
+def main():
+    all_losses = {config_id: load_trajectories(config_id)
+                  for config_id in ['hb', 'bohb']}
+
+    plot_losses(all_losses, 'Branin', show=True)
 
 
 if __name__ == "__main__":
