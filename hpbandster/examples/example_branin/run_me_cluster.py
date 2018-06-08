@@ -5,7 +5,7 @@ import logging
 import random
 from typing import Optional
 
-from hpbandster.optimizers import HyperBand
+from hpbandster.optimizers import HyperBand, BOHB
 import hpbandster.core.nameserver as hpns
 import ConfigSpace as CS
 
@@ -64,7 +64,7 @@ def start_worker(run_id: str,
 
 def start_master(run_id: str, ns: hpns.NameServer, nic_name: str, working_dir: str):
     config_space = build_config_space()
-    hb = HyperBand(
+    hb = BOHB(
         configspace=config_space,
         run_id=run_id,
         eta=3,
