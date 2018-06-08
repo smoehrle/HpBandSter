@@ -36,7 +36,9 @@ class BraninWorker(Worker):
 
         return({
             'loss': y,    # this is the a mandatory field to run hyperband
-            'info': cost  # can be used for any user-defined information - also mandatory
+            'info': {  # can be used for any user-defined information - also mandatory
+                'cost': cost
+            }
         })
 
     @staticmethod

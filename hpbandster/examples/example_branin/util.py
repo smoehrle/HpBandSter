@@ -2,7 +2,7 @@ import itertools
 
 from hpbandster.core.result import Result
 
-from worker import MyWorker
+from worker import BraninWorker
 
 
 def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
@@ -70,7 +70,7 @@ def start_worker(num_worker: int, worker_opts: dict) -> None:
     if worker_opts.get('cost') is None:
         worker_opts['cost'] = None
     for i in range(num_worker):
-        w = MyWorker(id=i, **worker_opts)
+        w = BraninWorker(id=i, **worker_opts)
         w.run(background=True)
 
 
