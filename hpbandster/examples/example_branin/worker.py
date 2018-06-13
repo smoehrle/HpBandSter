@@ -1,12 +1,10 @@
-import time
 import numpy as np
-import random
-
+import logging
 from typing import Callable
 
 from hpbandster.core.worker import Worker
 
-import logging
+import branin
 logging.basicConfig(level=logging.INFO)
 
 
@@ -42,20 +40,14 @@ class BraninWorker(Worker):
         })
 
     @staticmethod
-    def calc_noisy_branin(x1: float, x2: float, z1: float, z2: float, z3: float, noise_variance: float=0.05):
-        return BraninWorker.calc_branin(x1, x2, z1, z2, z3) + np.random.normal(0, noise_variance)
+    def calc_noisy_branin(x1: float, x2: float, z1: float, z2: float, z3: float,
+                          noise_variance: float = 0.05):
+        return branin.noisy_branin(x1, x2, z1, z2, z3, noise_variance)
 
     @staticmethod
     def _cost(z1: float, z2: float, z3: float) -> float:
-        return 0.05 + (z1**3 * z2**2 * z3**1.5)
+        return branin.cost(z1, z2, z3)
 
     @staticmethod
-    def calc_branin(x1: float, x2: float, z1: float=1, z2: float=1, z3: float=1) -> float:
-        a = 1
-        b = 5.1 / (4 * np.pi**2) - 0.01 * (1 - z1)
-        c = 5 / np.pi - 0.1 * (1 - z2)
-        r = 6
-        s = 10
-        t = 1 / (8 * np.pi) + 0.05 * (1 - z3)
-
-        return a * (x2 - b * x1**2 + c * x1 - r)**2 + s * (1 - t) * np.cos(x1) + s
+    def calc_branin(x1: float, x2: float, z1: float = 1, z2: float = 1, z3: float = 1) -> float:
+        return branin.mf_branin(x1, x2, z1, z2, z3)
