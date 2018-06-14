@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,9 +7,9 @@ import branin
 
 
 resolution = 50
-hb_steps = 5
+hb_steps = 10
 margin = 0.01
-cost_pow = dict(pow_z1=3, pow_z2=2, pow_z3=1.5)
+cost_pow = dict(pow_z1=1, pow_z2=1, pow_z3=1.5)
 min_cost = branin.cost(0, 0, 0, **cost_pow)
 max_cost = branin.cost(1, 1, 1, **cost_pow)
 
@@ -22,6 +23,26 @@ plot_data = [
     (3, 1, C[-1, :, :]),
 ]
 
+
+def log3(x):
+    return np.log(x) / np.log(3)
+
+
+def calc_trajectory(xi, yi):
+    def traj_func(z, b):
+        zz = np.ones(3)
+        zz[xi] = z[0]
+        zz[yi] = z[1]
+        return np.abs(branin.cost(*zz, **cost_pow) - b) - np.linalg.norm(zz, ord=2)
+    trajectory = np.empty((len(budgets), 2))
+    x0 = np.ones(2)
+    for i, b in enumerate(budgets[::-1]):
+        z = minimize(traj_func, x0, b, bounds=[(0, 1 + margin), (0, 1 + margin)])['x']
+        trajectory[i] = z
+        x0 = z
+    return trajectory
+
+
 extent = (0, 1 + margin, 0, 1 + margin)
 for i, (xl, yl, CC) in enumerate(plot_data):
     plt.title('$cost \\propto z_{0}^{{{1}}} \\cdot z_{2}^{{{3}}}$'
@@ -33,7 +54,8 @@ for i, (xl, yl, CC) in enumerate(plot_data):
     co = plt.contour(CC, levels=budgets, colors='k', origin='lower', extent=extent)
     plt.clabel(co, budgets[0::2],  # label every second level
                inline=1, fmt='%1.3f')
-
+    trajectory = calc_trajectory(xl - 1, yl - 1)
+    plt.plot(trajectory[:, 0], trajectory[:, 1], 'ro-')
     plt.colorbar(im)
 
     plt.show()
