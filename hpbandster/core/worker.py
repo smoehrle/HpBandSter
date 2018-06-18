@@ -132,7 +132,7 @@ class Worker(object):
 			while self.busy:
 				self.thread_cond.wait()
 			self.busy = True
-		self.logger.info('WORKER: start processing job %s'%str(id))
+		self.logger.debug('WORKER: start processing job %s'%str(id))
 		self.logger.debug('WORKER: args: %s'%(str(args)))
 		self.logger.debug('WORKER: kwargs: %s'%(str(kwargs)))
 		try:
@@ -147,7 +147,7 @@ class Worker(object):
 				self.busy =  False
 				callback.register_result(id, result)
 				self.thread_cond.notify()
-		self.logger.info('WORKER: registered result for job %s with dispatcher'%str(id))
+		self.logger.debug('WORKER: registered result for job %s with dispatcher'%str(id))
 		return(result)
 
 	@Pyro4.expose	

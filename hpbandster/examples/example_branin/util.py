@@ -3,26 +3,26 @@ import itertools
 from hpbandster.core.result import Result
 import numpy as np
 import scipy
+import ConfigSpace as CS
+import argparse
 
 
-def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
+def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True) -> dict:
     """
         Returns the best configurations over time simulated by adding up the used budget
 
-
         Parameters:
         -----------
-            res: Result
-                Result object returnd by a HB run
-            all_budgets: bool
-                If set to true all runs (even those not with the largest budget) can be the incumbent.
-                Otherwise, only full budget runs are considered
+        res :
+            Result object returnd by a HB run
+        all_budgets :
+            If set to true all runs (even those not with the largest budget) can be the incumbent.
+            Otherwise, only full budget runs are considered
 
         Returns:
         --------
-            dict:
-                dictionary with all the config IDs, the times the runs
-                finished, their respective budgets, and corresponding losses
+        dictionary with all the config IDs, the times the runs
+        finished, their respective budgets, and corresponding losses
     """
     all_runs = res.get_all_runs(only_largest_budget=not all_budgets)
 
@@ -124,23 +124,3 @@ def log_results(res: Result, *, simulate_time: bool) -> dict:
 
 def normalize_budget(budget: float, min_budget: float, max_budget: float) -> float:
     return (budget - min_budget) / (max_budget - min_budget)
-
-
-def fidelity_propto_budget(norm_budget: float, length: int = 3) -> np.ndarray:
-    # XXX: Do we want the |z| to be propto budget, or each single z dimension
-    z = norm_budget
-    return np.array(length * [z])
-
-
-def fidelity_propto_cost(norm_budget, x0, objective, fallback: bool = True) -> float:
-    options = dict(maxiter=1000)
-    extend = len(x0) * [(0, 1)]
-    result = scipy.optimize.minimize(objective,
-                                     x0, norm_budget, method='TNC',
-                                     bounds=extend, options=options)
-    if result['success'] or not fallback:
-        return result['x']
-    else:
-        print("FAILED NUMERICAL FIDELITY SEARCH")
-        print(result)
-        return fidelity_propto_budget(norm_budget, len(x0))
