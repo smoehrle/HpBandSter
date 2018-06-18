@@ -1,8 +1,8 @@
 import itertools
 
 from hpbandster.core.result import Result
-
-from worker import BraninWorker
+import numpy as np
+import scipy
 
 
 def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
@@ -66,15 +66,15 @@ def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True):
     return return_dict
 
 
-def start_worker(num_worker: int, worker_opts: dict) -> None:
+def start_worker(num_worker: int, worker_opts: dict, worker_class) -> None:
     if worker_opts.get('cost') is None:
         worker_opts['cost'] = None
     for i in range(num_worker):
-        w = BraninWorker(id=i, **worker_opts)
+        w = worker_class(id=i, **worker_opts)
         w.run(background=True)
 
 
-def run_hb(constructor, constructor_opts: dict, num_worker: int, iterations: int=10) -> Result:
+def run_hb(constructor, constructor_opts: dict, num_worker: int, iterations: int = 10) -> Result:
     print('Start {} run'.format(constructor))
     HB = constructor(**constructor_opts)
     res = HB.run(iterations, min_n_workers=num_worker)
@@ -116,6 +116,31 @@ def log_results(res: Result, *, simulate_time: bool) -> dict:
     losses = incumbent_trajectory['losses']
 
     for i in range(len(ids)):
-        print("Id: ({0[0]}, {0[1]}, {0[2]:>2}), time: {1:>5.2f}, budget: {2:>5}, loss: {3:>5.2f}".format(ids[i], times[i], budgets[i], losses[i]))
+        print("Id: ({0[0]}, {0[1]}, {0[2]:>2}), time: {1:>5.2f}, budget: {2:>5}, loss: {3:>5.2f}"
+              .format(ids[i], times[i], budgets[i], losses[i]))
 
     return incumbent_trajectory
+
+
+def normalize_budget(budget: float, min_budget: float, max_budget: float) -> float:
+    return (budget - min_budget) / (max_budget - min_budget)
+
+
+def fidelity_propto_budget(norm_budget: float, length: int = 3) -> np.ndarray:
+    # XXX: Do we want the |z| to be propto budget, or each single z dimension
+    z = norm_budget
+    return np.array(length * [z])
+
+
+def fidelity_propto_cost(norm_budget, x0, objective, fallback: bool = True) -> float:
+    options = dict(maxiter=1000)
+    extend = len(x0) * [(0, 1)]
+    result = scipy.optimize.minimize(objective,
+                                     x0, norm_budget, method='TNC',
+                                     bounds=extend, options=options)
+    if result['success'] or not fallback:
+        return result['x']
+    else:
+        print("FAILED NUMERICAL FIDELITY SEARCH")
+        print(result)
+        return fidelity_propto_budget(norm_budget, len(x0))

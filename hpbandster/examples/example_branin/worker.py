@@ -5,15 +5,20 @@ from typing import Callable
 from hpbandster.core.worker import Worker
 
 import branin
+import util
 logging.basicConfig(level=logging.INFO)
 
 
 class BraninWorker(Worker):
 
-    def __init__(self, true_y: float, cost: Callable[[float, float, float], float], *args, **kwargs):
+    def __init__(self, true_y: float, cost: Callable[[float, float, float], float],
+                 min_budget: float, max_budget: float, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.true_y = true_y
         self.cost = cost if cost else self._cost
+        self.min_budget = min_budget
+        self.max_budget = max_budget
+        self.z = None
 
     def compute(self, config, budget, *args, **kwargs):
         """
@@ -26,16 +31,24 @@ class BraninWorker(Worker):
             For dramatization, the function sleeps for one second, which emphasizes
             the speed ups achievable with parallel workers.
         """
-        z1 = z2 = z3 = budget / 100
-        cost = self.cost(z1, z2, z3)
+        strategy = 'fid_propto_cost'
+        norm_budget = util.normalize_budget(budget, self.min_budget, self.max_budget)
+        if self.z is None:
+            z0 = np.ones(3) * 0.5
+        else:
+            z0 = self.z
+        self.z = util.fidelity_propto_cost(norm_budget, z0, branin.cost_objective)
+        cost = self.cost(*self.z)
 
         x1, x2 = config['x1'], config['x2']
-        y = self.calc_noisy_branin(x1, x2, z1, z2, z3)
+        y = self.calc_noisy_branin(x1, x2, *self.z)
 
         return({
-            'loss': y,    # this is the a mandatory field to run hyperband
-            'info': {  # can be used for any user-defined information - also mandatory
-                'cost': cost
+            'loss': y,  # this is the a mandatory field to run hyperband
+            'info': {   # can be used for any user-defined information - also mandatory
+                'cost': cost,
+                'fidelity': np.array2string(self.z),
+                'fidelity_strategy': strategy
             }
         })
 
