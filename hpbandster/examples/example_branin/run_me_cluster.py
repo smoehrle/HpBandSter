@@ -10,7 +10,9 @@ import hpbandster.core.nameserver as hpns
 import ConfigSpace as CS
 
 from worker import BraninWorker
-import util
+
+min_budget = 27
+max_budget = 243
 
 
 def parse_cli() -> argparse.Namespace:
@@ -52,6 +54,7 @@ def start_worker(run_id: str,
     x2 = random.uniform(0, 15)
     true_y = BraninWorker.calc_branin(x1, x2)
     w = BraninWorker(true_y, cost,
+                     min_budget, max_budget,
                      run_id=run_id, host=host,
                      nameserver=nameserver, nameserver_port=nameserver_port)
     if nameserver is None or nameserver_port is None:
@@ -64,12 +67,12 @@ def start_worker(run_id: str,
 
 def start_master(run_id: str, ns: hpns.NameServer, nic_name: str, working_dir: str):
     config_space = build_config_space()
-    hb = BOHB(
+    hb = HyperBand(
         configspace=config_space,
         run_id=run_id,
+        min_budget=min_budget,
+        max_budget=max_budget,
         eta=3,
-        min_budget=27,
-        max_budget=243,
         host=ns.host,
         nameserver=ns.host,
         nameserver_port=ns.port,

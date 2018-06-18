@@ -55,3 +55,11 @@ def branin(x1: float, x2: float,
 def cost(z1: float, z2: float, z3: float,
          pow_z1: float = 3, pow_z2: float = 2, pow_z3: float = 1.5) -> float:
     return 0.05 + (z1**pow_z1 * z2**pow_z2 * z3**pow_z3)
+
+
+def __log3(x):
+    return np.log(x) / np.log(3)
+
+
+def cost_objective(z: np.ndarray, b: float, alpha: float = 1., cost_kwargs: Dict = {}):
+    return (np.abs(__log3(cost(*z, **cost_kwargs)) - __log3(b)) - alpha * np.linalg.norm(z, ord=2))
