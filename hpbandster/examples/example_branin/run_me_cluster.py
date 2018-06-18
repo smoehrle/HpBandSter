@@ -3,16 +3,49 @@ import argparse
 import pickle
 import logging
 import random
-from typing import Optional
+import numpy as np
+from typing import Optional, NamedTuple
 
-from hpbandster.optimizers import HyperBand, BOHB
+from hpbandster.optimizers import HyperBand, BOHB, RandomSearch
 import hpbandster.core.nameserver as hpns
 import ConfigSpace as CS
 
+import branin
+import util
 from worker import BraninWorker
+from fidelity_strat import FidelityPropToBudget, FidelityPropToCost
 
-min_budget = 27
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -------------------------------- Run config ---------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+# Each strategie is run 'num_runs' times
+# Each run consists of 'num_hb_runs' * 'num_brakets' iterations
+
+min_budget = 9
 max_budget = 243
+num_brakets = int(round((np.log(max_budget) - np.log(min_budget)) / np.log(3)))
+num_hb_runs = 2000
+
+num_runs = 3
+strategies = [
+    #FidelityPropToBudget([False, False, False]),
+    #FidelityPropToBudget([True, False, False]),
+    FidelityPropToBudget([False, True, False]),
+    FidelityPropToBudget([False, False, True]),
+    # FidelityPropToBudget([True, True, False]),
+    # FidelityPropToBudget([True, False, True]),
+    # FidelityPropToBudget([False, True, True]),
+    # FidelityPropToBudget([True, True, True]),
+]
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# ------------------------------ Run config end -------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def parse_cli() -> argparse.Namespace:
@@ -39,33 +72,28 @@ def build_config_space() -> CS.ConfigurationSpace:
     return config_space
 
 
-def start_worker(run_id: str,
-                 id: Optional[str] = None,
-                 nameserver: Optional[str] = None,
-                 nameserver_port: Optional[int] = None,
-                 working_dir: Optional[str] = None,
-                 host: Optional[str] = None,
-                 nic_name: Optional[str] = None,
-                 background: bool = False):
-    def cost(z1: float, z2: float, z3: float) -> float:
-        return 0.05 + (z1**3 * 1**2 * 1**1.5)
+def start_worker(
+        run_id: str,
+        strategie,
+        working_dir: str,
+        host: Optional[str] = None,
+        background: bool = False) -> None:
+    true_y = branin.min()
+    cost = branin.cost()
+    w = BraninWorker(
+        true_y,
+        cost,
+        strategie,
+        min_budget, max_budget,
+        run_id=run_id, host=host)
 
-    x1 = random.uniform(-5, 10)
-    x2 = random.uniform(0, 15)
-    true_y = BraninWorker.calc_branin(x1, x2)
-    w = BraninWorker(true_y, cost,
-                     min_budget, max_budget,
-                     run_id=run_id, host=host,
-                     nameserver=nameserver, nameserver_port=nameserver_port)
-    if nameserver is None or nameserver_port is None:
-        assert working_dir is not None, "Need working_dir to load nameserver credentials."
-        w.load_nameserver_credentials(working_dir)
+    assert working_dir is not None, "Need working_dir to load nameserver credentials."
+    w.load_nameserver_credentials(working_dir)
 
-    # run worker in the forground,
     w.run(background)
 
 
-def start_master(run_id: str, ns: hpns.NameServer, nic_name: str, working_dir: str):
+def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, working_dir: str):
     config_space = build_config_space()
     hb = HyperBand(
         configspace=config_space,
@@ -79,49 +107,55 @@ def start_master(run_id: str, ns: hpns.NameServer, nic_name: str, working_dir: s
         ping_interval=3600
     )
 
-    res = hb.run(n_iterations=4,
-                 min_n_workers=1)
+    res = hb.run(n_iterations=num_brakets*num_hb_runs, min_n_workers=1)
 
     # pickle result here for later analysis
-    with open(os.path.join(working_dir, 'results.{}.pkl'.format(run_id)), 'wb') as fh:
+    with open(os.path.join(working_dir, 'results.{}.pkl'.format(pickle_name)), 'wb') as fh:
         pickle.dump(res, fh)
 
     # shutdown all workers and namespace
     hb.shutdown(shutdown_workers=True)
-    ns.shutdown()
 
 
 def main():
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
     args = parse_cli()
-    ns_host, ns_port = None, None
-
-    if args.master:
-        ns = hpns.NameServer(run_id=args.run_id, nic_name=args.nic_name,
-                             working_directory=args.working_dir)
-        ns_host, ns_port = ns.start()
-
-    if args.worker:
-        host = hpns.nic_name_to_host(args.nic_name)
-        for i in range(args.num_worker):
-            start_worker(
-                args.run_id, host=host, id=str(i),
-                background=(args.master or args.num_worker > 1),
-                nameserver=ns_host,
-                nameserver_port=ns_port,
-                working_dir=args.working_dir,
-                nic_name=args.nic_name)
-
-    if args.master:
-        start_master(
-            args.run_id,
-            ns,
-            nic_name=args.nic_name,
-            working_dir=args.working_dir,)
 
     if not args.master and not args.worker:
-        logger.warning("Nothing to do.")
+        logger.warning("Nothing to do. Please specify --master and/or --worker.")
+
+    # start name server
+    if args.master:
+        ns = hpns.NameServer(
+            run_id=args.run_id, nic_name=args.nic_name,
+            working_directory=args.working_dir)
+        ns.start()
+
+    runs = [(strat, i) for strat in strategies for i in range(num_runs)]
+    for strat, i in runs:
+        print("Start run {} with strat {}".format(i, strat.name))
+        if args.worker:
+            host = hpns.nic_name_to_host(args.nic_name)
+            for j in range(args.num_worker):
+                start_worker(
+                    args.run_id,
+                    strat,
+                    host=host,
+                    background=(args.master or args.num_worker > 1),
+                    working_dir=args.working_dir)
+
+        if args.master:
+            pickle_name = '{}-{}-{}'.format(args.run_id, strat.name, i)
+            run_master(
+                args.run_id,
+                pickle_name,
+                ns,
+                working_dir=args.working_dir,)
+
+    # shutdown nameserver
+    if args.master:
+        ns.shutdown()
 
 
 if __name__ == "__main__":
