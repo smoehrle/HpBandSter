@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import branin
-
+import util
 
 resolution = 50
 hb_steps = 5
@@ -30,20 +30,18 @@ def log3(x):
 
 
 def calc_trajectory(xi, yi):
-    def traj_func(z, b):
+    def objective(z, b):
         zz = np.ones(3)
         zz[xi] = z[0]
         zz[yi] = z[1]
-        return 3**np.abs(log3(branin.cost(*zz, **cost_pow)) - log3(b)) - alpha * np.linalg.norm(zz, ord=2)
+        return branin.cost_objective(zz, b, cost_kwargs=cost_pow)
+
     trajectory = np.empty((len(budgets), 2))
     x0 = np.ones(2)
     for i, b in enumerate(budgets[::-1]):
         # Linesearch fails too often for default solver L-BFGS
         # Investigate why linesearch fails - they are also an issue with TNC
-        options = dict(maxiter=1000)
-        result = minimize(traj_func, x0, b, method='TNC', bounds=[(0, 1), (0, 1)], options=options)
-        z = result['x']
-        print(result)
+        z = util.fidelity_propto_cost(b, x0, objective, fallback=False)
         trajectory[i] = z
         x0 = z
     return trajectory
@@ -60,7 +58,7 @@ for ax, (xl, yl, CC) in zip(axis, plot_data):
     im = ax.imshow(CC, interpolation='bilinear', origin='lower', extent=extent)
     co = ax.contour(CC, levels=budgets, colors='k', origin='lower', extent=extent)
     ax.clabel(co, budgets[0:-1:2],  # label every second level
-               inline=1, fmt='%1.3f')
+              inline=1, fmt='%1.3f')
     trajectory = calc_trajectory(xl - 1, yl - 1)
     ax.plot(trajectory[:, 0], trajectory[:, 1], 'ro-')
 
