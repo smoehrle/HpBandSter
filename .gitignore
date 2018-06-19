@@ -5,3 +5,5 @@ dist/
 *.egg-info/
 venv/
 .vscode
+
+hpbandster/examples/example_branin/test*/
