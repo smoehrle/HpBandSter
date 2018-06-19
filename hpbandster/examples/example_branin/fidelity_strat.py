@@ -53,7 +53,7 @@ class FidelityPropToBudget(FidelityStrat):
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         # XXX: Do we want the |z| to be propto budget, or each single z dimension
-        z = np.array(len(self.use_fidelity) * [1])
+        z = np.array(len(self.use_fidelity) * [1.])
         z[self.use_fidelity] = norm_budget
         return z
 
