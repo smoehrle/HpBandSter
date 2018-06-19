@@ -13,10 +13,10 @@ class BraninWorker(Worker):
     def __init__(
             self, true_y: float,
             cost: Callable[[float, float, float], float],
-            strategie: fidelity_strat.FidelityStrat,
+            strategy: fidelity_strat.FidelityStrat,
             min_budget: float, max_budget: float, *args, **kwargs):
         """
-        Initialize the BraninWorker with a groundtruth and a fidelity strategie
+        Initialize the BraninWorker with a groundtruth and a fidelity strategy
 
         Parameters
         ----------
@@ -24,7 +24,7 @@ class BraninWorker(Worker):
             Groundtruth
         cost :
             Plugable cost function
-        strategie :
+        strategy :
             Responsible for the step 'budget to fidelity'
         min_budget :
             The lowest possible budget
@@ -34,7 +34,7 @@ class BraninWorker(Worker):
         super().__init__(*args, **kwargs)
         self.true_y = true_y
         self.cost = cost
-        self.strategie = strategie
+        self.strategie = strategy
         self.min_budget = min_budget
         self.max_budget = max_budget
 

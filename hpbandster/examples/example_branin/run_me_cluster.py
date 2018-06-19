@@ -26,7 +26,7 @@ from fidelity_strat import FidelityPropToBudget, FidelityPropToCost
 
 min_budget = 9
 max_budget = 243
-num_brakets = int(round((np.log(max_budget) - np.log(min_budget)) / np.log(3)))
+num_brackets = int(round((np.log(max_budget) - np.log(min_budget)) / np.log(3)))
 num_hb_runs = 2000
 
 num_runs = 3
@@ -107,7 +107,7 @@ def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, working_dir: 
         ping_interval=3600
     )
 
-    res = hb.run(n_iterations=num_brakets*num_hb_runs, min_n_workers=1)
+    res = hb.run(n_iterations=num_brackets*num_hb_runs, min_n_workers=1)
 
     # pickle result here for later analysis
     with open(os.path.join(working_dir, 'results.{}.pkl'.format(pickle_name)), 'wb') as fh:

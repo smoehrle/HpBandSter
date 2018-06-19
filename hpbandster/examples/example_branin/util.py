@@ -46,7 +46,7 @@ def get_simulated_incumbent_trajectory(res: Result, all_budgets: bool=True) -> d
         if r.loss is None:
             continue
 
-        total_budget += int(r.info)
+        total_budget += int(r.info['cost'])
         if ((r.budget == incumbent_budget and r.loss < current_incumbent) or
            (r.budget > incumbent_budget)):
             current_incumbent = r.loss
