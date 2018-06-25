@@ -111,7 +111,7 @@ def branin(
     return a * (x2 - b * x1**2 + c * x1 - r)**2 + s * (1 - t) * np.cos(x1) + s
 
 
-def cost(pow_z1: float = 3, pow_z2: float = 2, pow_z3: float = 1.5) -> Callable[[float, float, float], float]:
+def build_cost(pow_z1: float = 3, pow_z2: float = 2, pow_z3: float = 1.5) -> Callable[[float, float, float], float]:
     """
     Generate a cost function which calculates the cost for given fidelity parameters. This cost function is
     based on the BOCA paper
