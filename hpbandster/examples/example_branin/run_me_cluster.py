@@ -79,7 +79,7 @@ def start_worker(
         host: Optional[str] = None,
         background: bool = False) -> None:
     true_y = branin.min()
-    cost = branin.cost()
+    cost = branin.build_cost()
     w = BraninWorker(
         true_y,
         cost,
