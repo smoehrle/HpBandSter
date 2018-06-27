@@ -126,7 +126,7 @@ def build_cost(pow_z1: float = 3, pow_z2: float = 2, pow_z3: float = 1.5) -> Cal
     A cost function with the given powers
     """
     def _cost(z1: float, z2: float, z3: float) -> float:
-        return 0.05 + (z1**pow_z1 * z2**pow_z2 * z3**pow_z3)
+        return 0.05 + ((1+z1)**pow_z1 * (1+z2)**pow_z2 * (1+z3)**pow_z3)
     return _cost
 
 
