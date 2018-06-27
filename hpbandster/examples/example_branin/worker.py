@@ -31,6 +31,17 @@ class BraninWorker(Worker):
         max_budget :
             The highest possible budget
         """
+        self.branin_param = branin.default_param
+        if 'bz' in kwargs:
+            self.branin_param['bz'] = kwargs['bz']
+            del kwargs['bz']
+        if 'cz' in kwargs:
+            self.branin_param['cz'] = kwargs['cz']
+            del kwargs['cz']
+        if 'tz' in kwargs:
+            self.branin_param['tz'] = kwargs['tz']
+            del kwargs['tz']
+
         super().__init__(*args, **kwargs)
         self.true_y = true_y
         self.cost = cost
@@ -54,12 +65,12 @@ class BraninWorker(Worker):
         -------
         dict with the 'loss' and another 'info'-dict.
         """
-        norm_budget = util.normalize_budget(budget, self.min_budget, self.max_budget)
+        norm_budget = util.normalize_budget(budget, self.max_budget)
         z = self.strategie.calc_fidelities(norm_budget)
         cost = self.cost(*z)
 
         x1, x2 = config['x1'], config['x2']
-        y = branin.noisy_branin(x1, x2, *z)
+        y = branin.noisy_branin(x1, x2, *z, param=self.branin_param)
 
         return({
             'loss': np.abs(y-self.true_y),  # this is the a mandatory field to run hyperband

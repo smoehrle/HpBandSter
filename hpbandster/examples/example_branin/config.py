@@ -5,6 +5,8 @@ from typing import NamedTuple
 
 from hpbandster.optimizers import HyperBand, RandomSearch
 
+import branin
+import fidelity_strat as strat
 
 
 class ExperimentConfig(NamedTuple):
@@ -35,7 +37,7 @@ class ExperimentConfig(NamedTuple):
     num_hb_runs: int
     num_runs: int
     runs: tuple
-    
+
     # auto-generated:
     working_dir: str
 
@@ -56,9 +58,21 @@ class RunConfig():
     @property
     def display_name(self) -> str:
         pass
-    
+
     @property
     def constructor(self):
+        pass
+
+    @property
+    def strategy(self):
+        pass
+
+    @property
+    def cost(self):
+        pass
+
+    @property
+    def branin_params(self):
         pass
 
 
@@ -73,17 +87,50 @@ class RandomSearchConfig(NamedTuple):
     def constructor(self):
         return RandomSearch
 
+    @property
+    def strategy(self):
+        return strat.FidelityPropToBudget([True]*3)
+    
+    @property
+    def cost(self):
+        return branin.build_cost()
+
+    @property
+    def branin_params(self):
+        return {}
+
 
 class HyperBandConfig(NamedTuple):
     name: str
+    z1: bool = False
+    z1_pow: float = 3
+    z2: bool = False
+    z2_pow: float = 2
+    z3: bool = False
+    z3_pow: float = 1.5
+    bz: float = branin.default_param['bz']
+    cz: float = branin.default_param['cz']
+    tz: float = branin.default_param['tz']
 
     @property
     def display_name(self) -> str:
-        return '{} with {}'.format(self.name, "stratxy")
+        return '{}_{}'.format(self.name, self.strategy.name)
 
     @property
     def constructor(self):
         return HyperBand
+
+    @property
+    def strategy(self):
+        return strat.FidelityPropToBudget([self.z1, self.z2, self.z3])
+
+    @property
+    def cost(self):
+        return branin.build_cost(self.z1_pow, self.z2_pow, self.z3_pow)
+
+    @property
+    def branin_params(self):
+        return {'bz': self.bz, 'cz': self.cz, 'tz': self.tz}
 
 
 def load(file_path: str) -> ExperimentConfig:
