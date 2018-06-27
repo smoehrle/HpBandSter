@@ -85,6 +85,7 @@ def run_hb(constructor, constructor_opts: dict, num_worker: int, iterations: int
 def log_results(res: Result, *, simulate_time: bool) -> dict:
     id2config = res.get_id2config_mapping()
 
+    res.data
     # Log number of configurations
     print('A total of {} unique configurations where sampled.'.format(
         len(id2config.keys())))
@@ -122,5 +123,5 @@ def log_results(res: Result, *, simulate_time: bool) -> dict:
     return incumbent_trajectory
 
 
-def normalize_budget(budget: float, min_budget: float, max_budget: float) -> float:
-    return (budget - min_budget) / (max_budget - min_budget)
+def normalize_budget(budget: float, max_budget: float) -> float:
+    return budget / max_budget

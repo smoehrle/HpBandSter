@@ -1,5 +1,7 @@
-num_hb_runs: 50
-num_runs: 10
+num_hb_runs: 10
+num_runs: 5
 
 runs:
-  - name: 'RandsomSearch'
+  - name: 'RandomSearch'
+  - name: 'HyperBand'
+

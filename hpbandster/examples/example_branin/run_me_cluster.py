@@ -55,26 +55,23 @@ def build_config_space() -> CS.ConfigurationSpace:
 
 def start_worker(
         run_id: str,
-        strategie,
-        config: ExperimentConfig,
+        cfg: config.ExperimentConfig,
+        run: config.RunConfig,
         host: Optional[str] = None,
         background: bool = False) -> None:
     true_y = branin.min()
     cost = branin.build_cost()
     w = BraninWorker(
         true_y,
-        cost,
-        strategie,
-        config.min_budget, config.max_budget,
-        run_id=run_id, host=host)
+        run.cost,
+        run.strategy,
+        cfg.min_budget, cfg.max_budget,
+        run_id=run_id, host=host, **run.branin_params)
 
-    assert config.working_dir is not None, "Need working_dir to load nameserver credentials."
-    w.load_nameserver_credentials(config.working_dir)
+    assert cfg.working_dir is not None, "Need working_dir to load nameserver credentials."
+    w.load_nameserver_credentials(cfg.working_dir)
 
     w.run(background)
-
-
-            # run_master(args.run_id, pickle_name, ns, cfg, run)
 
 
 def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: config.ExperimentConfig, run: config.RunConfig):
@@ -106,6 +103,7 @@ def main():
     logger = logging.getLogger()
     args = parse_cli()
     cfg = config.load(args.config)
+    logger.info(cfg)
 
     if not args.master and not args.worker:
         logger.warning("Nothing to do. Please specify --master and/or --worker.")
@@ -118,16 +116,11 @@ def main():
 
     runs = [(i, run) for run in cfg.runs for i in range(cfg.num_runs)]
     for i, (run_id, run) in enumerate(runs):
-        print("Start run {}/{}".format(i, len(runs)))
+        print("Start run {}/{}".format(i+1, len(runs)))
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
             for j in range(args.num_worker):
-                start_worker(
-                    args.run_id,
-                    config,
-                    host=host,
-                    background=(args.master or args.num_worker > 1))
-
+                start_worker(args.run_id, cfg, run, host=host, background=(args.master or args.num_worker > 1))
         if args.master:
             pickle_name = '{}-{}-{}'.format(args.run_id, run.display_name.lower(), run_id+cfg.offset)
             run_master(args.run_id, pickle_name, ns, cfg, run)

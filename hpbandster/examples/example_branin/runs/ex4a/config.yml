@@ -1,0 +1,15 @@
+num_hb_runs: 25
+num_runs: 10
+
+runs:
+  - name: 'RandomSearch'
+  - name: 'HyperBand'
+    z1: True
+  - name: 'HyperBand'
+    z2: True
+  - name: 'HyperBand'
+    z3: True
+  - name: 'HyperBand'
+    z1: True
+    z2: True
+    z3: True

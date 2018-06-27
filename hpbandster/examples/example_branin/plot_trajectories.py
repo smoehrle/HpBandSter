@@ -11,7 +11,6 @@ def extract_result(results_object):
     """
         Returns the best configurations over time, but also returns the cummulative budget
 
-
         Parameters:
         -----------
             all_budgets: bool
@@ -53,8 +52,9 @@ def extract_result(results_object):
         if r.loss is None:
             continue
 
-        if (r.budget == incumbent_budget and r.loss < current_incumbent) or \
-           r.budget > incumbent_budget:
+        if (r.budget >= incumbent_budget and r.loss < current_incumbent):
+        # if ((r.budget == incumbent_budget and r.loss < current_incumbent) or\
+        #      r.budget > incumbent_budget):
             current_incumbent = r.loss
             incumbent_budget = r.budget
 
@@ -188,9 +188,19 @@ def load_trajectories(config_id, working_dir: str = '.'):
         'losses': np.array(df.T)
     }
 
+
 def main():
     all_losses = {config_id: load_trajectories(config_id)
-                  for config_id in ['hb', 'bohb']}
+                  for config_id in [
+                      '001-randomsearch-',
+                      '001-hyperband_propto_budget_z0-',
+                      '001-hyperband_propto_budget_z1-',
+                      '001-hyperband_propto_budget_z2-',
+                    #   '001-propto_budget_z0_z1-',
+                    #   '001-propto_budget_z0_z2-',
+                    #   '001-propto_budget_z1_z2-',
+                      '001-hyperband_propto_budget_z0_z1_z2-',
+                      ]}
 
     plot_losses(all_losses, 'Branin', show=True)
 
