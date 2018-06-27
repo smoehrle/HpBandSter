@@ -1,6 +1,7 @@
 import os
 import glob
 import pickle
+import sys
 
 import numpy as np
 import pandas as pd
@@ -190,16 +191,17 @@ def load_trajectories(config_id, working_dir: str = '.'):
 
 
 def main():
-    all_losses = {config_id: load_trajectories(config_id)
+    run_id = sys.argv[1] if len(sys.argv) > 1 else '001'
+    all_losses = {config_id: load_trajectories('{}-{}'.format(run_id, config_id))
                   for config_id in [
-                      '001-randomsearch-',
-                      '001-hyperband_propto_budget_z0-',
-                      '001-hyperband_propto_budget_z1-',
-                      '001-hyperband_propto_budget_z2-',
+                      'randomsearch-',
+                      'hyperband_propto_budget_z0-',
+                      'hyperband_propto_budget_z1-',
+                      'hyperband_propto_budget_z2-',
                     #   '001-propto_budget_z0_z1-',
                     #   '001-propto_budget_z0_z2-',
                     #   '001-propto_budget_z1_z2-',
-                      '001-hyperband_propto_budget_z0_z1_z2-',
+                      'hyperband_propto_budget_z0_z1_z2-',
                       ]}
 
     plot_losses(all_losses, 'Branin', show=True)
