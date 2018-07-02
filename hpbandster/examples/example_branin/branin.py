@@ -1,27 +1,22 @@
 #! /usr/bin/env python3
 
 from problem import Problem
-from typing import Callable, Dict
 import ConfigSpace as CS
 import numpy as np
 
-default_param = dict(
-    a=1,
-    b=5.1 / (4 * np.pi**2),
-    c=5 / np.pi,
-    r=6,
-    s=10,
-    t=1 / (8 * np.pi),
-    bz=-0.01,
-    cz=-0.1,
-    tz=0.05)
+
+def _boca_deviation(x: np.ndarray, z: np.ndarray, bz: float, cz: float, tz: float) -> np.ndarray:
+    zz = 1 - z
+    return np.array([zz[0] * bz, zz[1] * cz, zz[2] * tz])
 
 
 class Branin(Problem):
     """
     Implementation of the branin function as a toy black box.
 
-    Read more about branin: https://www.sfu.ca/~ssurjano/branin.html
+    Read more about branin and its parameter on
+    https://www.sfu.ca/~ssurjano/branin.html
+
     Usually choose -5 <= x1 <= 10 and 0 <= x2 <= 15.
     """
     def __init__(self, **kwargs):
@@ -30,15 +25,43 @@ class Branin(Problem):
         ----------
         **kwargs :
             Change the default behavior of the branin function.
-            Possible parameters are: a,b,c,r,s,t,bz,cz,tz,pow_z1,pow_z2,pow_z3
+            Possible parameters are: a,b,c,r,s,t,bz,cz,tz, deviation.
+
+
         """
-        self.params = {**default_param, **kwargs}
-        self.pow_z1 = kwargs['pow_z1'] if 'pow_z1' in kwargs else 3.
-        self.pow_z2 = kwargs['pow_z2'] if 'pow_z2' in kwargs else 2.
-        self.pow_z3 = kwargs['pow_z3'] if 'pow_z3' in kwargs else 1.5
+        default_kwargs = dict(a=1,
+                              b=5.1 / (4 * np.pi**2),
+                              c=5 / np.pi,
+                              r=6,
+                              s=10,
+                              t=1 / (8 * np.pi),
+                              deviation=_boca_deviation,
+                              deviation_kwargs=dict(
+                                  bz=-0.01,
+                                  cz=-0.1,
+                                  tz=0.05),
+                              pow_z1=3,
+                              pow_z2=2,
+                              pow_z3=1.5)
+        kwargs = {
+            **default_kwargs,
+            **kwargs
+        }
+
+        self.a = kwargs['a']  # type: float
+        self.b = kwargs['b']  # type: float
+        self.c = kwargs['c']  # type: float
+        self.r = kwargs['r']  # type: float
+        self.s = kwargs['s']  # type: float
+        self.t = kwargs['t']  # type: float
+        self.deviation = kwargs['deviation']  # type: Callable[np.ndarray, np.ndarray]
+        self.deviation_kwargs = kwargs['deviation_kwargs']  # type: Dict[str, float]
+        self.pow_z1 = kwargs['pow_z1']  # type: float
+        self.pow_z2 = kwargs['pow_z2']  # type: float
+        self.pow_z3 = kwargs['pow_z3']  # type: float
 
     def __repr__(self):
-        return "Branin({})".format(repr(self.params))
+        return "Branin Problem"
 
     def calc_loss(self, config: CS.ConfigurationSpace, fidelities: np.ndarray):
         """
@@ -55,7 +78,7 @@ class Branin(Problem):
         -------
             The loss
         """
-        y = self.calc_noisy(config['x1'], config['x2'], *fidelities, param=self.params)
+        y = self.calc_noisy(config['x1'], config['x2'], *fidelities)
         return np.abs(self.min - y)
 
     @staticmethod
@@ -72,8 +95,8 @@ class Branin(Problem):
 
     def cost(self, z1, z2, z3) -> float:
         """
-        Cost function which calculates the cost for given fidelity parameters. This cost function is
-        based on the BOCA paper
+        Cost function which calculates the cost for given fidelity parameters.
+        This cost function is based on the BOCA paper
 
         Parameters
         ----------
@@ -84,14 +107,13 @@ class Branin(Problem):
         -------
         The cost
         """
-        return 0.05 + ((1+z1)**self.pow_z1 * (1+z2)**self.pow_z2 * (1+z3)**self.pow_z3)
+        return 0.05 + ((1 + z1)**self.pow_z1 * (1 + z2)**self.pow_z2 * (1 + z3)**self.pow_z3)
 
-    @staticmethod
     def calc_noisy(
+            self,
             x1: float, x2: float,
-            z1: float=1, z2: float=1, z3: float=1,
-            noise_std: float=0.05,
-            param: Dict[str, float]=default_param) -> float:
+            z1: float, z2: float, z3: float,
+            noise_std: float = 0.05) -> float:
         """
         Calculate multi fidelity branin function for given parameters and add some noise
 
@@ -112,13 +134,13 @@ class Branin(Problem):
         -------
             The result of the calculation
         """
-        return Branin.calc_mf(x1, x2, z1, z2, z3, param) + np.random.normal(0, noise_std)
+        return self.calc_mf(x1, x2, z1, z2, z3)\
+            + np.random.normal(0, noise_std)
 
-    @staticmethod
     def calc_mf(
+            self,
             x1: float, x2: float,
-            z1: float=1, z2: float=1, z3: float=1,
-            param: Dict[str, float]=default_param) -> float:
+            z1: float, z2: float, z3: float) -> float:
         """
         Calculate multi fidelity branin function for given parameters
 
@@ -139,24 +161,16 @@ class Branin(Problem):
         """
         assert z1 >= 0 and z1 <= 1 and z2 >= 0 and z2 <= 1 and z3 >= 0 and z3 <= 1,\
             "Assure fidelity 0 <= z <= 1."
-        merged_param = {**default_param, **param}
-        merged_param['b'] += merged_param['bz'] * (1 - z1)
-        merged_param['c'] += merged_param['cz'] * (1 - z2)
-        merged_param['t'] += merged_param['tz'] * (1 - z3)
-        del merged_param['bz']
-        del merged_param['cz']
-        del merged_param['tz']
-        return Branin.calc(x1, x2, **merged_param)
+        delta = self.deviation(np.array([x1, x2]),
+                               np.array([z1, z2, z3]),
+                               **self.deviation_kwargs)
+        return self.calc(x1, x2, *delta)
 
-    @staticmethod
-    def calc(
-            x1: float, x2: float,
-            a: float = default_param['a'],
-            b: float = default_param['b'],
-            c: float = default_param['c'],
-            r: float = default_param['r'],
-            s: float = default_param['s'],
-            t: float = default_param['t']) -> float:
+    def calc(self,
+             x1: float, x2: float,
+             delta_a: float = 0.,
+             delta_b: float = 0.,
+             delta_c: float = 0.) -> float:
         """
         Calculate branin function for given parameters.
         This branin function is based on the function defined in the BOCA paper.
@@ -168,20 +182,25 @@ class Branin(Problem):
         x2 :
             Second coordinate. Range: [0:15]
         a, b, c, r, s, t :
-            Branin tuning parameter. Default: parameters from BOCA
+            Branin tuning parameter.
 
         Returns
         -------
             The result of the calculation
         """
-        return a * (x2 - b * x1**2 + c * x1 - r)**2 + s * (1 - t) * np.cos(x1) + s
+        a = self.a + delta_a
+        b = self.b + delta_b
+        c = self.c + delta_c
+        return a * (x2 - b * x1**2 + c * x1 - self.r)**2\
+            + self.s * (1 - self.t) * np.cos(x1) + self.s
 
     @property
     def min(self) -> float:
         """
         Returns
         -------
-        The minimum which the BOCA branin function can reach. This minimum is reachable in three points
-        (-pi, 12.275), (pi, 2.275), (9.42478, 2.475)
+        The minimum which the BOCA branin function can reach.
+        This minimum is reachable in three points
+            (-pi, 12.275), (pi, 2.275), (9.42478, 2.475)
         """
         return 0.397887
