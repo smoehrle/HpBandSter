@@ -34,6 +34,24 @@ class FidelityStrat:
         pass
 
 
+class FullFidelity(FidelityStrat):
+    """
+    This is a trivial strategie which always returns 1 as fidelity
+    """
+    def __init__(self, num_fidelities: int):
+        """
+        Parameters
+        ----------
+        num_fidelities :
+            Number of fidelities
+        """
+        super().__init__('full_fidelity')
+        self.num_fidelities = num_fidelities
+
+    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
+        return np.array(self.num_fidelities * [1.])
+
+
 class FidelityPropToBudget(FidelityStrat):
     """
     This is a trivial strategie which uses the normalised budget directly as fidelity

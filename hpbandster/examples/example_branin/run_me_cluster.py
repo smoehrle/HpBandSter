@@ -14,20 +14,9 @@ import ConfigSpace as CS
 import branin
 import config
 import util
-from worker import BraninWorker
+from worker import SimM2FWorker
 from fidelity_strat import FidelityPropToBudget, FidelityPropToCost
 
-
-strategies = [
-    # FidelityPropToBudget([False, False, False]),
-    # FidelityPropToBudget([True, False, False]),
-    # FidelityPropToBudget([False, True, False]),
-    # FidelityPropToBudget([False, False, True]),
-    # FidelityPropToBudget([True, True, False]),
-    # FidelityPropToBudget([True, False, True]),
-    # FidelityPropToBudget([False, True, True]),
-    # FidelityPropToBudget([True, True, True]),
-]
 
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter branin toy function example.')
@@ -46,27 +35,17 @@ def parse_cli() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_config_space() -> CS.ConfigurationSpace:
-    config_space = CS.ConfigurationSpace()
-    config_space.add_hyperparameter(CS.UniformFloatHyperparameter('x1', lower=-5, upper=10))
-    config_space.add_hyperparameter(CS.UniformFloatHyperparameter('x2', lower=0, upper=15))
-    return config_space
-
-
 def start_worker(
         run_id: str,
         cfg: config.ExperimentConfig,
         run: config.RunConfig,
         host: Optional[str] = None,
         background: bool = False) -> None:
-    true_y = branin.min()
-    cost = branin.build_cost()
-    w = BraninWorker(
-        true_y,
-        run.cost,
+    w = SimM2FWorker(
+        run.problem,
         run.strategy,
-        cfg.min_budget, cfg.max_budget,
-        run_id=run_id, host=host, **run.branin_params)
+        cfg.max_budget,
+        run_id=run_id, host=host)
 
     assert cfg.working_dir is not None, "Need working_dir to load nameserver credentials."
     w.load_nameserver_credentials(cfg.working_dir)
@@ -75,7 +54,7 @@ def start_worker(
 
 
 def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: config.ExperimentConfig, run: config.RunConfig):
-    config_space = build_config_space()
+    config_space = run.problem.build_config_space()
     hb = run.constructor(
         configspace=config_space,
         run_id=run_id,
@@ -119,7 +98,7 @@ def main():
         print("Start run {}/{}".format(i+1, len(runs)))
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
-            for j in range(args.num_worker):
+            for _ in range(args.num_worker):
                 start_worker(args.run_id, cfg, run, host=host, background=(args.master or args.num_worker > 1))
         if args.master:
             pickle_name = '{}-{}-{}'.format(args.run_id, run.display_name.lower(), run_id+cfg.offset)

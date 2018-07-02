@@ -53,35 +53,36 @@ class ExperimentConfig(NamedTuple):
 
 class RunConfig():
     """
-    Somewhat an abstract class which tells you what a specific RunConfig should implement
+    Abstract class specifying a run config
     """
     @property
     def display_name(self) -> str:
-        pass
+        raise NotImplementedError('RunConfig.display_name')
 
     @property
     def constructor(self):
-        pass
+        raise NotImplementedError('RunConfig.constructor')
 
     @property
     def strategy(self):
-        pass
+        raise NotImplementedError('RunConfig.strategy')
 
     @property
-    def cost(self):
-        pass
-
-    @property
-    def branin_params(self):
-        pass
+    def problem(self):
+        raise NotImplementedError('RunConfig.problem')
 
 
-class RandomSearchConfig(NamedTuple):
-    name: str
+class RandomSearchConfig(RunConfig):
+    """
+    Run config for a random search run
+    """
+    def __init__(self, problem, strategy):
+        self._problem = problem
+        self._strategy = strategy
 
     @property
     def display_name(self) -> str:
-        return self.name
+        return 'RandomSearch'
 
     @property
     def constructor(self):
@@ -89,48 +90,37 @@ class RandomSearchConfig(NamedTuple):
 
     @property
     def strategy(self):
-        return strat.FidelityPropToBudget([True]*3)
-    
-    @property
-    def cost(self):
-        return branin.build_cost()
+        return self._strategy
 
     @property
-    def branin_params(self):
-        return {}
+    def problem(self):
+        return self._problem
 
 
-class HyperBandConfig(NamedTuple):
-    name: str
-    z1: bool = False
-    z1_pow: float = 3
-    z2: bool = False
-    z2_pow: float = 2
-    z3: bool = False
-    z3_pow: float = 1.5
-    bz: float = branin.default_param['bz']
-    cz: float = branin.default_param['cz']
-    tz: float = branin.default_param['tz']
+class HyperBandConfig(RunConfig):
+    """
+    Run config for a hyberband run
+    """
+    def __init__(self, problem, strategy):
+        self._problem = problem
+        self._strategy = strategy
 
     @property
     def display_name(self) -> str:
-        return '{}_{}'.format(self.name, self.strategy.name)
+        return '{}_{}'.format('hyberband', self.strategy.name)
 
     @property
     def constructor(self):
         return HyperBand
 
+
     @property
     def strategy(self):
-        return strat.FidelityPropToBudget([self.z1, self.z2, self.z3])
+        return self._strategy
 
     @property
-    def cost(self):
-        return branin.build_cost(self.z1_pow, self.z2_pow, self.z3_pow)
-
-    @property
-    def branin_params(self):
-        return {'bz': self.bz, 'cz': self.cz, 'tz': self.tz}
+    def problem(self):
+        return self._problem
 
 
 def load(file_path: str) -> ExperimentConfig:
@@ -150,11 +140,63 @@ def load(file_path: str) -> ExperimentConfig:
     with open(file_path, 'r') as f:
         dict_ = yaml.load(f)
     dict_['working_dir'] = os.path.dirname(file_path)
+
+    problems = load_problems(dict_['problems'])
+    del dict_['problems']
+    strategies = load_strategies(dict_['strategies'])
+    del dict_['strategies']
     runs = []
     for run in dict_['runs']:
-        if run['name'] == 'RandomSearch':
-            runs.append(RandomSearchConfig(**run))
-        if run['name'] == 'HyperBand':
-            runs.append(HyperBandConfig(**run))
+        name = run['name']
+        p = problems[run['problem']]
+        s = strategies[run['strategy']]
+        if name == 'RandomSearch':
+            runs.append(RandomSearchConfig(p, s))
+        elif name == 'HyperBand':
+            runs.append(HyperBandConfig(p, s))
+        else:
+            raise NotImplementedError('The run type "{}" is not implemented'.format(name))
     dict_['runs'] = tuple(runs)
     return ExperimentConfig(**dict_)
+
+
+def load_problems(problems: dict) -> dict:
+    if not problems:
+        raise LookupError('No problem instances defined!')
+
+    result = {}
+    for p in problems:
+        name = p['name'].lower()
+        del p['name']
+        label = p['label'].lower()
+        del p['label']
+
+        if name == 'branin':
+            obj = branin.Branin(**p)
+        else:
+            raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
+
+        result[label] = obj
+    return result
+
+
+def load_strategies(strategies: dict) -> dict:
+    if not strategies:
+        raise LookupError('No strategy instance defined!')
+
+    result = {}
+    for s in strategies:
+        name = s['name'].lower()
+        del s['name']
+        label = s['label'].lower()
+        del s['label']
+
+        if name == 'full':
+            obj = strat.FullFidelity(**s)
+        elif name == 'proptobudget':
+            obj = strat.FidelityPropToBudget(**s)
+        else:
+            raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
+
+        result[label] = obj
+    return result
