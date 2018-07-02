@@ -22,6 +22,8 @@ def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter branin toy function example.')
     parser.add_argument('--run-id', help='unique id to identify the HPB run.',
                         default='HPB_branin', type=str)
+    parser.add_argument('--task-id', help='task id to identify the run.',
+                        type=int)
     parser.add_argument('--config', help='location of the config file.',
                         default='.', type=str)
     parser.add_argument('--nic-name', help='name of the Network Interface Card.',
@@ -95,6 +97,8 @@ def main():
 
     runs = [(i, run) for run in cfg.runs for i in range(cfg.num_runs)]
     for i, (run_id, run) in enumerate(runs):
+        if (args.task_id and args.task_id != i+1):
+            continue
         print("Start run {}/{}".format(i+1, len(runs)))
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
