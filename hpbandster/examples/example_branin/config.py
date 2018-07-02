@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import yaml
-from typing import NamedTuple
+from collections import namedtuple
 
 from hpbandster.optimizers import HyperBand, RandomSearch
 
@@ -9,7 +9,11 @@ import branin
 import fidelity_strat as strat
 
 
-class ExperimentConfig(NamedTuple):
+class ExperimentConfig(namedtuple('ExperimentConfig1',
+        [ 'num_hb_runs', 'num_runs', 'runs', 'working_dir', 'min_budget', 'max_budget', 'offset'])):
+    __slots__ = ()
+    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, min_budget=9, max_budget=243, offset=0):
+        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, min_budget, max_budget, offset)
     """
     Contains all configuration parameters which are not
     specific for a single run.
@@ -33,18 +37,19 @@ class ExperimentConfig(NamedTuple):
         Offset for the result pickle name. If you already have 10
         results set this value to 10. Then the next run will be #11
     """
-    # Mandatory config values
-    num_hb_runs: int
-    num_runs: int
-    runs: tuple
+    # NamedTuple with type hints and default values are not supported by Python 3.5
+    # # Mandatory config values
+    # num_hb_runs: int
+    # num_runs: int
+    # runs: tuple
 
-    # auto-generated:
-    working_dir: str
+    # # auto-generated:
+    # working_dir: str
 
-    # Optional config values
-    min_budget: int = 9
-    max_budget: int = 243
-    offset: int = 0
+    # # Optional config values
+    # min_budget: int = 9
+    # max_budget: int = 243
+    # offset: int = 0
 
     @property
     def num_brackets(self) -> int:
