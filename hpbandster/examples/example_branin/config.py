@@ -104,7 +104,7 @@ class RandomSearchConfig(RunConfig):
 
 class HyperBandConfig(RunConfig):
     """
-    Run config for a hyberband run
+    Run config for a hyperband run
     """
     def __init__(self, problem, strategy):
         self._problem = problem
@@ -112,7 +112,7 @@ class HyperBandConfig(RunConfig):
 
     @property
     def display_name(self) -> str:
-        return '{}_{}'.format('hyberband', self.strategy.name)
+        return '{}_{}'.format('hyperband', self.strategy.name)
 
     @property
     def constructor(self):
