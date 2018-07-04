@@ -11,4 +11,4 @@ mkdir -p "~moehrles/logs/${$JOB_ID}"
 # enter the virtual environment
 source ~moehrles/HpBandSter/venv/bin/activate
 
-python3 run_me_cluster.py --run_id "$JOB_ID" --task_id "$TASK_ID" --master --worker --config $1
+python3 run_me_cluster.py --run_id "$JOB_ID" --last-task-id "$LAST_TASK_ID" --task_id "$TASK_ID" --master --worker --config $1
