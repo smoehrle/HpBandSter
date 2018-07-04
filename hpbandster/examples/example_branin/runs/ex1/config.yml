@@ -7,7 +7,7 @@ problems:
     z1_pow: 1.
     z2_pow: 1.
     z3_pow: 1
-    deviation: 'linear'
+    deviation: 'boca'
     deviation_kwargs:
        bz: 0.05
        cz: 0.05
