@@ -5,9 +5,23 @@ import ConfigSpace as CS
 import numpy as np
 
 
-def _boca_deviation(x: np.ndarray, z: np.ndarray, bz: float, cz: float, tz: float) -> np.ndarray:
+def _boca_deviation(x: np.ndarray, z: np.ndarray,
+                    bz: float, cz: float, tz: float, **kwargs) -> np.ndarray:
+    """
+    Constant error terms (depend on z but not x) according to boca paper.
+    """
+
     zz = 1 - z
     return np.array([zz[0] * bz, zz[1] * cz, zz[2] * tz])
+
+
+def _linear_deviation(x: np.ndarray, z: np.ndarray,
+                      bz: float, cz: float, tz: float, **kwargs) -> np.ndarray:
+    zz = 1 - z
+    xx = np.linalg.norm(x) / np.linalg.norm([10, 15])
+    return np.array([zz[0] * bz * xx,
+                     zz[1] * cz * xx,
+                     zz[2] * tz * xx])
 
 
 class Branin(Problem):
@@ -35,7 +49,7 @@ class Branin(Problem):
                               r=6,
                               s=10,
                               t=1 / (8 * np.pi),
-                              deviation=_boca_deviation,
+                              deviation='boca',
                               deviation_kwargs=dict(
                                   bz=-0.01,
                                   cz=-0.1,
@@ -54,7 +68,12 @@ class Branin(Problem):
         self.r = kwargs['r']  # type: float
         self.s = kwargs['s']  # type: float
         self.t = kwargs['t']  # type: float
-        self.deviation = kwargs['deviation']  # type: Callable[np.ndarray, np.ndarray]
+        if kwargs['deviation'] == "boca":
+            self.deviation = _boca_deviation
+        elif kwargs['deviation'] == "linear":
+            self.deviation = _linear_deviation
+        else:
+            raise Exception("Expected 'deviation' parameter to be 'boca' or 'linear'")
         self.deviation_kwargs = kwargs['deviation_kwargs']  # type: Dict[str, float]
         self.pow_z1 = kwargs['pow_z1']  # type: float
         self.pow_z2 = kwargs['pow_z2']  # type: float
