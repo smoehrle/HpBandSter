@@ -12,6 +12,9 @@ class Problem:
     def __repr__(self):
         raise NotImplementedError('__repr__ of Problem')
 
+    def cost(self, *args: float) -> float:
+        raise NotImplementedError()
+
     def calc_loss(self, config: CS.ConfigurationSpace, fidelities: np.ndarray) -> float:
         """
         Calculate the loss for given configuration and fidelities

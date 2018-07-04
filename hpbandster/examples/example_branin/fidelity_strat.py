@@ -5,6 +5,7 @@ import numpy as np
 from typing import Callable
 
 import util
+from problem import Problem
 
 
 class FidelityStrat:
@@ -82,12 +83,12 @@ class FidelityPropToCost(FidelityStrat):
     """
     def __init__(
             self, num_fidelities: float,
-            cost: Callable[[float, float, float], float],
+            problem: Problem,
             fallback: bool):
         super().__init__('fid_propto_cost')
         self.num_fidelities = num_fidelities
         self.z = np.ones(num_fidelities) * 0.5
-        self.cost = cost
+        self.cost = problem.cost
         self.fallback = fallback
         self.alpha = 1.
         self.logger = logging.getLogger()

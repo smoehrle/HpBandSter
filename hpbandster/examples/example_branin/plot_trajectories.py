@@ -198,10 +198,8 @@ def main():
                       'hyperband_propto_budget_z0-',
                       'hyperband_propto_budget_z1-',
                       'hyperband_propto_budget_z2-',
-                    #   '001-propto_budget_z0_z1-',
-                    #   '001-propto_budget_z0_z2-',
-                    #   '001-propto_budget_z1_z2-',
                       'hyperband_propto_budget_z0_z1_z2-',
+                      'hyperband_fid_propto_cost-',
                       ]}
 
     plot_losses(all_losses, 'Branin', show=True)
