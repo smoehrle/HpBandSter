@@ -78,8 +78,7 @@ def main():
     logger = logging.getLogger()
     args = parse_cli()
     # Fix nameserver colision on cluster
-    if args.task_id:
-        run_id_combined = args.run_id + str(args.task_id)
+    run_id_combined = args.run_id + str(args.task_id) if args.task_id else args.run_id
     cfg = config.load(args.config)
     logger.info(cfg)
 
