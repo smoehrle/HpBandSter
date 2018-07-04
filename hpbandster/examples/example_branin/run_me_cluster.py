@@ -79,7 +79,7 @@ def main():
     args = parse_cli()
     # Fix nameserver colision on cluster
     if args.task_id:
-        args.run_id += str(args.task_id)
+        run_id_combined = args.run_id + str(args.task_id)
     cfg = config.load(args.config)
     logger.info(cfg)
 
@@ -89,7 +89,7 @@ def main():
 
     # start name server
     if args.master:
-        ns = hpns.NameServer(run_id=args.run_id, nic_name=args.nic_name, working_directory=cfg.working_dir)
+        ns = hpns.NameServer(run_id=run_id_combined, nic_name=args.nic_name, working_directory=cfg.working_dir)
         ns.start()
 
     runs = [(i, run) for run in cfg.runs for i in range(cfg.num_runs)]
@@ -104,10 +104,10 @@ def main():
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
             for _ in range(args.num_worker):
-                start_worker(args.run_id, cfg, run, host=host, background=(args.master or args.num_worker > 1))
+                start_worker(run_id_combined, cfg, run, host=host, background=(args.master or args.num_worker > 1))
         if args.master:
             pickle_name = '{}-{}-{}'.format(args.run_id, run.display_name.lower(), run_id+cfg.offset)
-            run_master(args.run_id, pickle_name, ns, cfg, run)
+            run_master(run_id_combined, pickle_name, ns, cfg, run)
 
     # shutdown nameserver
     if args.master:
