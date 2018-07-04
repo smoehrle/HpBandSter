@@ -1,15 +1,15 @@
 num_hb_runs: 15
-num_runs: 10
+num_runs: 256
 
 problems:
   - name: 'Branin'
     label: 'p1'
-    z1_pow: 3.
+    z1_pow: 1.
     z2_pow: 1.
-    z3_pow: 1.
+    z3_pow: 1
     deviation: 'linear'
     deviation_kwargs:
-       bz: 5.05
+       bz: 0.05
        cz: 0.05
        tz: 0.05
 
