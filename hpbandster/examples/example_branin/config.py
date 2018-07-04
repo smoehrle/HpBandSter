@@ -1,11 +1,13 @@
-import numpy as np
 import os
-import yaml
+from typing import Dict
 from collections import namedtuple
 
+import yaml
+import numpy as np
 from hpbandster.optimizers import HyperBand, RandomSearch
 
 import branin
+from problem import Problem
 import fidelity_strat as strat
 
 
@@ -148,7 +150,7 @@ def load(file_path: str) -> ExperimentConfig:
 
     problems = load_problems(dict_['problems'])
     del dict_['problems']
-    strategies = load_strategies(dict_['strategies'])
+    strategies = load_strategies(problems, dict_['strategies'])
     del dict_['strategies']
     runs = []
     for run in dict_['runs']:
@@ -185,7 +187,7 @@ def load_problems(problems: dict) -> dict:
     return result
 
 
-def load_strategies(strategies: dict) -> dict:
+def load_strategies(problems: Dict[str, Problem], strategies: dict) -> dict:
     if not strategies:
         raise LookupError('No strategy instance defined!')
 
@@ -200,6 +202,10 @@ def load_strategies(strategies: dict) -> dict:
             obj = strat.FullFidelity(**s)
         elif name == 'proptobudget':
             obj = strat.FidelityPropToBudget(**s)
+        elif name == 'proptocost':
+            prob = problems[s['problem']]
+            del s['problem']
+            obj = strat.FidelityPropToCost(problem=prob, **s)
         else:
             raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
 

@@ -1,15 +1,17 @@
 num_hb_runs: 15
-num_runs: 128
+num_runs: 10
 
 problems:
   - name: 'Branin'
     label: 'p1'
-    z1_pow: 1.
+    z1_pow: 3.
     z2_pow: 1.
     z3_pow: 1.
-    bz: 0.05
-    cz: 0.05
-    tz: 0.05
+    deviation: 'linear'
+    deviation_kwargs:
+       bz: 5.05
+       cz: 0.05
+       tz: 0.05
 
 strategies:
   - name: 'full'
@@ -27,6 +29,11 @@ strategies:
   - name: 'proptobudget'
     label: 's4'
     use_fidelity: [True, True, True]
+  - name: 'proptocost'
+    label: 's5'
+    problem: 'p1'
+    num_fidelities: 3
+    fallback: false
 
 runs:
   - name: 'RandomSearch'
@@ -44,3 +51,6 @@ runs:
   - name: 'HyperBand'
     problem: 'p1'
     strategy: 's4'
+  - name: 'HyperBand'
+    problem: 'p1'
+    strategy: 's5'
