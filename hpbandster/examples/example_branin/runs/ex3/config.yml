@@ -4,9 +4,9 @@ num_runs: 256
 problems:
   - name: 'Branin'
     label: 'p1'
-    z1_pow: 3.
-    z2_pow: 2.
-    z3_pow: 1.
+    pow_z1: 3.
+    pow_z2: 2.
+    pow_z3: 1.
     deviation: 'boca'
     deviation_kwargs:
        bz: 0.05
