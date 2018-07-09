@@ -84,13 +84,15 @@ class FidelityPropToCost(FidelityStrat):
     def __init__(
             self, num_fidelities: float,
             problem: Problem,
-            fallback: bool):
+            fallback: bool,
+            alpha: float = 1.):
         super().__init__('fid_propto_cost')
         self.num_fidelities = num_fidelities
         self.z = np.ones(num_fidelities) * 0.5
         self.cost = problem.cost
+        self.max_cost = problem.cost(*np.ones(num_fidelities))
         self.fallback = fallback
-        self.alpha = 1.
+        self.alpha = alpha
         self.logger = logging.getLogger()
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
@@ -98,7 +100,8 @@ class FidelityPropToCost(FidelityStrat):
         extend = self.num_fidelities * [(0, 1)]
 
         def cost_objective(z: np.ndarray, b: float):
-            return (np.abs(self._log3(self.cost(*z)) - self._log3(b)) - self.alpha * np.linalg.norm(z, ord=2))
+            return (np.abs(self._log3(self.cost(*z) / self.max_cost)**2 - self._log3(b))
+                    - self.alpha * np.linalg.norm(z, ord=2))
 
         result = scipy.optimize.minimize(
             cost_objective, self.z, norm_budget,
