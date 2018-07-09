@@ -83,12 +83,15 @@ class RandomSearchConfig(RunConfig):
     """
     Run config for a random search run
     """
-    def __init__(self, problem, strategy):
+    def __init__(self, problem, strategy, displayname):
         self._problem = problem
         self._strategy = strategy
+        self._displayname = displayname
 
     @property
     def display_name(self) -> str:
+        if self._displayname is not None:
+            return self._displayname
         return 'RandomSearch'
 
     @property
@@ -108,12 +111,15 @@ class HyperBandConfig(RunConfig):
     """
     Run config for a hyperband run
     """
-    def __init__(self, problem, strategy):
+    def __init__(self, problem, strategy, displayname):
         self._problem = problem
         self._strategy = strategy
+        self._displayname = displayname
 
     @property
     def display_name(self) -> str:
+        if self._displayname is not None:
+            return self._displayname
         return '{}_{}'.format('hyperband', self.strategy.name)
 
     @property
@@ -157,10 +163,11 @@ def load(file_path: str) -> ExperimentConfig:
         name = run['name']
         p = problems[run['problem']]
         s = strategies[run['strategy']]
+        displayname = run['displayname'] if 'displayname' in run else None
         if name == 'RandomSearch':
-            runs.append(RandomSearchConfig(p, s))
+            runs.append(RandomSearchConfig(p, s, displayname))
         elif name == 'HyperBand':
-            runs.append(HyperBandConfig(p, s))
+            runs.append(HyperBandConfig(p, s, displayname))
         else:
             raise NotImplementedError('The run type "{}" is not implemented'.format(name))
     dict_['runs'] = tuple(runs)
