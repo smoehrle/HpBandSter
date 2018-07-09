@@ -2,7 +2,6 @@ import pickle
 import typing
 import argparse
 import logging
-import itertools
 from collections import defaultdict
 
 import numpy as np
@@ -51,8 +50,12 @@ def rank_result(result: Result) -> pd.DataFrame:
 
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter rank utility functions.')
-    parser.add_argument('--result-file', help='Result object to load as pickle file.',
+    parser.add_argument('--result-files',
+                        nargs='+',
+                        help='Result object to load as pickle file.',
                         type=str)
+    parser.add_argument('--mean', action='store_true',
+                        help='Calculate mean rank over results.')
     return parser.parse_args()
 
 
@@ -60,11 +63,19 @@ def main():
     cli_param = parse_cli()
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
-    if cli_param.result_file is not None:
-        with open(cli_param.result_file, 'rb') as f:
+
+    rank_df_lst = []
+    for file_name in cli_param.result_files:
+        with open(file_name, 'rb') as f:
             result = pickle.load(f)
-        rank_df = rank_result(result)
-        logger.info(rank_df)
+
+        rank_df_lst.append(rank_result(result))
+    rank_df = pd.concat(rank_df_lst)
+
+    if cli_param.mean:
+        rank_df = rank_df.groupby(level=0).mean()
+
+    logger.info(rank_df)
 
 
 if __name__ == '__main__':
