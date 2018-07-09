@@ -88,7 +88,7 @@ class FidelityPropToCost(FidelityStrat):
             alpha: float = 1.):
         super().__init__('fid_propto_cost')
         self.num_fidelities = num_fidelities
-        self.z = np.ones(num_fidelities) * 0.5
+        self.init_z = np.ones(num_fidelities) * 0.5
         self.cost = problem.cost
         self.max_cost = problem.cost(*np.ones(num_fidelities))
         self.fallback = fallback
@@ -100,20 +100,22 @@ class FidelityPropToCost(FidelityStrat):
         extend = self.num_fidelities * [(0, 1)]
 
         def cost_objective(z: np.ndarray, b: float):
-            return (np.abs(self._log3(self.cost(*z) / self.max_cost)**2 - self._log3(b))
+            return (np.abs(self._log3(self.cost(*z) / self.max_cost) - self._log3(b))
                     - self.alpha * np.linalg.norm(z, ord=2))
 
         result = scipy.optimize.minimize(
-            cost_objective, self.z, norm_budget,
+            cost_objective, [norm_budget] * self.num_fidelities, norm_budget,
             method='TNC', bounds=extend, options=options)
 
         if result['success'] or not self.fallback:
-            self.z = result['x']
+            z = result['x']
+            self.init_z = z
         else:
             self.logger.info("FAILED NUMERICAL FIDELITY SEARCH")
             self.logger.info(result)
-            self.z = np.array(self.num_fidelities * [norm_budget])
-        return self.z
+            z = np.array(self.num_fidelities * [norm_budget])
+            self.init_z = z
+        return z
 
     @staticmethod
     def _log3(x):
