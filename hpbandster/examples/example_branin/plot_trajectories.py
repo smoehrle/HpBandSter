@@ -2,6 +2,7 @@ import os
 import glob
 import pickle
 import sys
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -190,9 +191,23 @@ def load_trajectories(config_id, working_dir: str = '.'):
     }
 
 
+def parse_cli() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='HpBandSter plot trajectories utility functions.')
+    parser.add_argument('--working-dir',
+                        help='Folder to search for result files.',
+                        type=str,
+                        default='.')
+    parser.add_argument('--run-filter',
+                        help='Search for results.<run-filter>...pkl files.',
+                        type=str,
+                        required=True)
+    return parser.parse_args()
+
+
 def main():
-    run_id = sys.argv[1] if len(sys.argv) > 1 else '001'
-    all_losses = {config_id: load_trajectories('{}-{}'.format(run_id, config_id))
+    cli_param = parse_cli()
+    all_losses = {config_id: load_trajectories('{}-{}'.format(cli_param.run_filter, config_id),
+                                               cli_param.working_dir)
                   for config_id in [
                       'randomsearch-',
                       'hyperband_propto_budget_z0-',
