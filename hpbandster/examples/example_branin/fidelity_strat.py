@@ -1,10 +1,9 @@
 import logging
-import scipy
-import numpy as np
-
 from typing import Callable
 
-import util
+import numpy as np
+import scipy.optimize
+
 from problem import Problem
 
 
@@ -84,15 +83,13 @@ class FidelityPropToCost(FidelityStrat):
     def __init__(
             self, num_fidelities: float,
             problem: Problem,
-            fallback: bool,
-            alpha: float = 1.):
+            fallback: bool):
         super().__init__('fid_propto_cost')
         self.num_fidelities = num_fidelities
         self.init_z = np.ones(num_fidelities) * 0.5
         self.cost = problem.cost
         self.max_cost = problem.cost(*np.ones(num_fidelities))
         self.fallback = fallback
-        self.alpha = alpha
         self.logger = logging.getLogger()
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
@@ -100,12 +97,15 @@ class FidelityPropToCost(FidelityStrat):
         extend = self.num_fidelities * [(0, 1)]
 
         def cost_objective(z: np.ndarray, b: float):
-            return (np.abs(self._log3(self.cost(*z) / self.max_cost) - self._log3(b))
-                    - self.alpha * np.linalg.norm(z, ord=2))
+            return (self.cost(*z) / self.max_cost - b)**2
 
+        def fidelity_objective(z: np.ndarray):
+            return 1 - np.linalg.norm(z, ord=2)
+
+        constraint = dict(type='eq', fun=cost_objective, args=(norm_budget,))
         result = scipy.optimize.minimize(
-            cost_objective, [norm_budget] * self.num_fidelities, norm_budget,
-            method='TNC', bounds=extend, options=options)
+            fidelity_objective, [norm_budget] * self.num_fidelities,
+            method='SLSQP', bounds=extend, constraints=constraint, options=options)
 
         if result['success'] or not self.fallback:
             z = result['x']
