@@ -6,6 +6,8 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 from hpbandster.core.result import Result
 
@@ -48,14 +50,26 @@ def rank_result(result: Result) -> pd.DataFrame:
     return pd.DataFrame(infos)
 
 
+def plot_ranks(mean_df: pd.DataFrame, std_df: pd.DataFrame) -> None:
+    plt.ylim(0, 1)
+    plt.xlabel('budget')
+    plt.ylabel('spearman rank correlation')
+    for (_, mean_row), (_, std_row) in zip(mean_df.iterrows(), std_df.iterrows()):
+        x = [mean_row.budget_x, mean_row.budget_y]
+        y = 2 * [mean_row.spearman_corr]
+        plt.errorbar(x, y, yerr=std_row.spearman_corr, capsize=4, elinewidth=0.5)
+
+
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter rank utility functions.')
     parser.add_argument('--result-files',
                         nargs='+',
                         help='Result object to load as pickle file.',
                         type=str)
-    parser.add_argument('--mean', action='store_true',
-                        help='Calculate mean rank over results.')
+    parser.add_argument('--show-plot', action='store_true',
+                        help='Show plot of ranks.')
+    parser.add_argument('--save-plot', type=str,
+                        help='Save plot of ranks.')
     return parser.parse_args()
 
 
@@ -70,13 +84,16 @@ def main():
             result = pickle.load(f)
 
         rank_df_lst.append(rank_result(result))
-    rank_df = pd.concat(rank_df_lst)
+    mean_df = pd.concat(rank_df_lst).groupby(level=0).mean()
+    std_df = pd.concat(rank_df_lst).groupby(level=0).std()
+    logger.info(mean_df)
 
-    if cli_param.mean:
-        rank_df = rank_df.groupby(level=0).mean()
-
-    logger.info(rank_df)
-
+    if cli_param.show_plot or cli_param.save_plot is not None:
+        plot_ranks(mean_df, std_df)
+    if cli_param.show_plot:
+        plt.show()
+    if cli_param.save_plot is not None:
+        plt.savefig(cli_param.save_plot)
 
 if __name__ == '__main__':
     main()
