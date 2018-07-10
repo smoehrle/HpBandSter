@@ -176,11 +176,11 @@ def plot_losses(incumbent_trajectories, title, regret=True, incumbent=None,
 def load_trajectories(config_id, working_dir: str = '.'):
     df = pd.DataFrame()
     for fn in glob.glob(os.path.join(working_dir, 'results.{}*.pkl'.format(config_id))):
+        print('Load {} ...'.format(fn), end="\r")
         with open(fn, 'rb') as fh:
             result = pickle.load(fh)
         datum = extract_result(result)
         times = np.array(datum['cummulative_cost'])
-        print(fn, datum['test_losses'], times)
         tmp = pd.DataFrame({fn: datum['losses']}, index=times)
         df = df.join(tmp, how='outer')
     df = fill_trajectories(df)
