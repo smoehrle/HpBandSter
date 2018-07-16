@@ -1,5 +1,5 @@
 num_hb_runs: 15
-num_runs: 256
+num_runs: 300
 
 problems:
   - name: 'Branin'
@@ -32,8 +32,19 @@ strategies:
   - name: 'proptocost'
     label: 's5'
     problem: 'p1'
-    num_fidelities: 3
-    fallback: false
+    use_fidelity: [True, False, False]
+  - name: 'proptocost'
+    label: 's6'
+    problem: 'p1'
+    use_fidelity: [False, True, False]
+  - name: 'proptocost'
+    label: 's7'
+    problem: 'p1'
+    use_fidelity: [False, False, True]
+  - name: 'proptocost'
+    label: 's8'
+    problem: 'p1'
+    use_fidelity: [True, True, True]
 
 runs:
   - name: 'RandomSearch'
@@ -54,3 +65,12 @@ runs:
   - name: 'HyperBand'
     problem: 'p1'
     strategy: 's5'
+  - name: 'HyperBand'
+    problem: 'p1'
+    strategy: 's6'
+  - name: 'HyperBand'
+    problem: 'p1'
+    strategy: 's7'
+  - name: 'HyperBand'
+    problem: 'p1'
+    strategy: 's8'

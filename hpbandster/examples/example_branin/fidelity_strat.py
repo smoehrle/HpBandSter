@@ -1,5 +1,6 @@
+import collections
+from typing import Callable, Optional, Iterable
 import logging
-from typing import Callable
 
 import numpy as np
 import scipy.optimize
@@ -18,7 +19,7 @@ class FidelityStrat:
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         """
-        This function is the core of the strategie. It receives a given 
+        This function is the core of the strategie. It receives a given
         budget and should return an ndarray containing the fidelity
         parameters.
 
@@ -70,7 +71,6 @@ class FidelityPropToBudget(FidelityStrat):
         self.use_fidelity = np.array(use_fidelity)
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
-        # XXX: Do we want the |z| to be propto budget, or each single z dimension
         z = np.array(len(self.use_fidelity) * [1.])
         z[self.use_fidelity] = norm_budget
         return z
@@ -81,40 +81,53 @@ class FidelityPropToCost(FidelityStrat):
     This is a more sophisticated strategie which uses a cost-to-fidelity model.
     """
     def __init__(
-            self, num_fidelities: float,
+            self,
             problem: Problem,
-            fallback: bool):
-        super().__init__('fid_propto_cost')
-        self.num_fidelities = num_fidelities
-        self.init_z = np.ones(num_fidelities) * 0.5
+            use_fidelity: Iterable[bool],
+            alpha: float = 1.):
+        self.use_fidelity = np.array(use_fidelity, dtype=np.bool)
+        fidelities = ['z{}'.format(i) for i, v in enumerate(self.use_fidelity) if v]
+        super().__init__('fid_propto_cost_{}'.format('_'.join(fidelities)))
+
         self.cost = problem.cost
-        self.max_cost = problem.cost(*np.ones(num_fidelities))
-        self.fallback = fallback
+        self.max_cost = problem.cost(*np.ones(self._num_fidelities))
+        self.alpha = alpha
         self.logger = logging.getLogger()
 
-    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
-        options = dict(maxiter=1000)
-        extend = self.num_fidelities * [(0, 1)]
+    @property
+    def _num_variable_fidelities(self) -> int:
+        return self.use_fidelity.sum()
 
+    @property
+    def _num_fidelities(self) -> int:
+        return len(self.use_fidelity)
+
+    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         def cost_objective(z: np.ndarray, b: float):
-            return (self.cost(*z) / self.max_cost - b)**2
+            Z = np.ones_like(self.use_fidelity)
+            Z[self.use_fidelity] = z
+            return (self.cost(*Z) / self.max_cost - b)**2
 
         def fidelity_objective(z: np.ndarray):
-            return 1 - np.linalg.norm(z, ord=2)
+            Z = np.ones_like(self.use_fidelity)
+            Z[self.use_fidelity] = z
+            return 1 - np.linalg.norm(Z, ord=2)
 
         constraint = dict(type='eq', fun=cost_objective, args=(norm_budget,))
+        options = dict()
+        extend = self._num_variable_fidelities * [(0, 1)]
+        init_z = self._num_variable_fidelities * [norm_budget]
         result = scipy.optimize.minimize(
-            fidelity_objective, [norm_budget] * self.num_fidelities,
+            fidelity_objective, init_z,
             method='SLSQP', bounds=extend, constraints=constraint, options=options)
 
-        if result['success'] or not self.fallback:
-            z = result['x']
-            self.init_z = z
+        z = np.ones_like(self.use_fidelity)
+        if result['success']:
+            z[self.use_fidelity] = result['x']
         else:
-            self.logger.info("FAILED NUMERICAL FIDELITY SEARCH")
-            self.logger.info(result)
-            z = np.array(self.num_fidelities * [norm_budget])
-            self.init_z = z
+            self.logger.warning("FAILED NUMERICAL FIDELITY SEARCH init_x: {}".format(init_z))
+            self.logger.warning(result)
+            z[self.use_fidelity] = init_z
         return z
 
     @staticmethod
