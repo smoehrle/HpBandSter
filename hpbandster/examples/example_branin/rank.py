@@ -1,26 +1,13 @@
 import pickle
-import typing
 import argparse
 import logging
 from collections import defaultdict
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from scipy.stats import spearmanr
 
 from hpbandster.core.result import Result
-
-
-def rank(lst: typing.Iterable[float]) -> typing.Iterable[int]:
-    return np.argsort(lst) + 1
-
-
-def spearman_corr(x: typing.Iterable[int], y: typing.Iterable[int]) -> float:
-    n = len(x)
-    d2 = sum((x - y)**2)
-    norm = n * (n**2 - 1)
-    return 1 - (6 * d2 / norm)
 
 
 def rank_result(result: Result) -> pd.DataFrame:
@@ -38,11 +25,11 @@ def rank_result(result: Result) -> pd.DataFrame:
             configs = configs_by_budget[left_budget] & configs_by_budget[right_budget]
             configs_results = [result.data[config_id].results
                                for config_id in configs]
-            left_ranks = rank([results[left_budget]['loss']
-                               for results in configs_results])
-            right_ranks = rank([results[right_budget]['loss']
-                                for results in configs_results])
-            scorr = spearman_corr(left_ranks, right_ranks)
+            left_loss = [results[left_budget]['loss']
+                         for results in configs_results]
+            right_loss = [results[right_budget]['loss']
+                          for results in configs_results]
+            scorr, _ = spearmanr(left_loss, right_loss)
             infos.append(dict(budget_x=left_budget,
                               budget_y=right_budget,
                               spearman_corr=scorr,
