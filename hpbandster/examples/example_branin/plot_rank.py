@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
 from tabulate import tabulate
@@ -6,12 +7,15 @@ import util
 from branin import Branin
 from fidelity_strat import FidelityPropToBudget
 
-num_configs = 100
+num_configs = 1000
 budgets = [9, 27, 81, 243]
 problems = [
     ('Zero', Branin(deviation_kwargs={'bz': 0, 'cz': 0, 'tz': 0}), FidelityPropToBudget([True]*3)),
     ('Default', Branin(), FidelityPropToBudget([True]*3)),
-    ('0.05', Branin(deviation_kwargs={'bz': 0.05, 'cz': 0.05, 'tz': 0.05}), FidelityPropToBudget([True]*3)),
+    ('1.', Branin(deviation_kwargs={'tz': 1., 'cz': 1., 'bz': 1.}), FidelityPropToBudget([True]*3)),
+    ('1.5', Branin(deviation_kwargs={'tz': 1., 'cz': 1., 'bz': 0.05}), FidelityPropToBudget([True]*3)),
+    ('1.', Branin(deviation_kwargs={'tz': 0., 'cz': 0., 'bz': 1.}), FidelityPropToBudget([True]*3)),
+    ('1.', Branin(deviation_kwargs={'tz': 0., 'cz': 0., 'bz': 0.05}), FidelityPropToBudget([True]*3)),
 ]
 
 
@@ -20,10 +24,6 @@ def calc_loss(config, budget, problem, strat):
     z = strat.calc_fidelities(norm_budget)
     return problem.calc_loss(config, z)
 
-
-def calc_rank(losses):
-    tmp = [(l, i) for i, l in enumerate(losses)]
-    return [i for (_, i) in sorted(tmp)]
 
 # Bookkeeping
 losses = np.zeros((len(problems), len(budgets), num_configs))
@@ -42,13 +42,15 @@ for i, (_, p, s) in enumerate(problems):
 
 combinations = [(j, k) for j in range(len(budgets)) for k in range(j+1, j+1+len(budgets[j+1:]))]
 combinations.sort(key=lambda x: np.abs(x[0]-x[1]))
-for i in range(len(problems)):
-    ranks = []
-    for j in range(len(budgets)):
-        ranks.append(calc_rank(losses[i, j, :]))
+# combinations = combinations[0:3]
+fix, axes = plt.subplots(len(problems), 1, figsize=(12, 16))
+
+for i, axis in zip(range(len(problems)), axes):
+    axis.set_title(problems[i][0])
 
     for j, (i1, i2) in enumerate(combinations):
-        rank_corr[i, j], _ = scipy.stats.spearmanr(ranks[i1], ranks[i2])
+        rank_corr[i, j], _ = scipy.stats.spearmanr(losses[i, i1, :], losses[i, i2, :])
+        axis.scatter(losses[i, i1, :], losses[i, i2, :], s=0.5, label="{} -> {}".format(budgets[i1], budgets[i2]))
 
 
 headers = ['Name']
@@ -61,3 +63,5 @@ for i, (n, _, _) in enumerate(problems):
     data.append(d)
 
 print(tabulate(data, headers=headers))
+plt.legend()
+plt.show()

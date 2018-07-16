@@ -16,6 +16,18 @@ problems:
        bz: 0.05
        cz: 0.05
        tz: 0.05
+  - name: 'Branin'
+    label: 'p4'
+    deviation_kwargs:
+       bz: 0.001
+       cz: 0.001
+       tz: 0.001
+  - name: 'Branin'
+    label: 'p5'
+    deviation_kwargs:
+       bz: 0.0001
+       cz: 0.0001
+       tz: 0.0001
 
 strategies:
   - name: 'full'
@@ -41,3 +53,12 @@ runs:
     problem: 'p3'
     strategy: 's1'
     displayname: 'hyperband_0.05_error'
+  - name: 'HyperBand'
+    problem: 'p4'
+    strategy: 's1'
+    displayname: 'hyperband_0.001_error'
+  - name: 'HyperBand'
+    problem: 'p5'
+    strategy: 's1'
+    displayname: 'hyperband_0.0001_error'
+
