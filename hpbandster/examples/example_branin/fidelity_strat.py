@@ -104,12 +104,12 @@ class FidelityPropToCost(FidelityStrat):
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         def cost_objective(z: np.ndarray, b: float):
-            Z = np.ones_like(self.use_fidelity)
+            Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
             return (self.cost(*Z) / self.max_cost - b)**2
 
         def fidelity_objective(z: np.ndarray):
-            Z = np.ones_like(self.use_fidelity)
+            Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
             return 1 - np.linalg.norm(Z, ord=2)
 
@@ -121,11 +121,12 @@ class FidelityPropToCost(FidelityStrat):
             fidelity_objective, init_z,
             method='SLSQP', bounds=extend, constraints=constraint, options=options)
 
-        z = np.ones_like(self.use_fidelity)
+        z = np.ones_like(self.use_fidelity, dtype=np.float)
         if result['success']:
             z[self.use_fidelity] = result['x']
         else:
-            self.logger.warning("FAILED NUMERICAL FIDELITY SEARCH init_x: {}".format(init_z))
+            self.logger.warning("FAILED NUMERICAL FIDELITY SEARCH".format())
+            self.logger.warning("{}, norm budget {:.2f} ".format(self.name, norm_budget))
             self.logger.warning(result)
             z[self.use_fidelity] = init_z
         return z

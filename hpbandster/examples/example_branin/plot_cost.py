@@ -30,19 +30,16 @@ def log3(x):
 
 
 def calc_trajectory(xi, yi):
-    def cost(*z):
-        zz = np.ones(3)
-        zz[xi] = z[0]
-        zz[yi] = z[1]
-        return branin.cost(*zz)
-
+    fid_filter = np.full((3,), False)
+    fid_filter[xi] = True
+    fid_filter[yi] = True
     trajectory = np.empty((len(budgets), 2))
-    local_branin = Branin(**cost_pow)
-    local_branin.cost = cost
-    strategy = FidelityPropToCost(2, local_branin, False)
+    strategy = FidelityPropToCost(branin, use_fidelity=fid_filter)
     for i, b in enumerate(norm_budgets):
         z = strategy.calc_fidelities(b)
-        trajectory[i] = z
+        trajectory[i, 0] = z[xi]
+        trajectory[i, 1] = z[yi]
+
     return trajectory
 
 
