@@ -69,6 +69,7 @@ class SimM2FWorker(Worker):
                 'cost': cost,
                 'fidelity': np.array2string(z),
                 'fidelity_strategy': repr(self.strategie),
+                'strategy_info': self.strategie.info,
                 'problem': repr(self.problem),
             }
         })
