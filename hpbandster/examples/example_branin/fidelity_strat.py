@@ -16,6 +16,7 @@ class FidelityStrat:
     """
     def __init__(self, name):
         self.name = name
+        self.info = dict()
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         """
@@ -106,7 +107,7 @@ class FidelityPropToCost(FidelityStrat):
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            return (self.cost(*Z) / self.max_cost - b)**2
+            return (b - self.cost(*Z) / self.max_cost)**2
 
         def fidelity_objective(z: np.ndarray):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
@@ -114,14 +115,20 @@ class FidelityPropToCost(FidelityStrat):
             return 1 - np.linalg.norm(Z, ord=2)
 
         constraint = dict(type='eq', fun=cost_objective, args=(norm_budget,))
-        options = dict()
+        options = dict(maxiter=1000)
         extend = self._num_variable_fidelities * [(0, 1)]
         init_z = self._num_variable_fidelities * [norm_budget]
-        result = scipy.optimize.minimize(
-            fidelity_objective, init_z,
-            method='SLSQP', bounds=extend, constraints=constraint, options=options)
+        if self._num_variable_fidelities == 1:
+            result = scipy.optimize.minimize(
+                cost_objective, init_z, norm_budget, bounds=extend, options=options)
+        else:
+            result = scipy.optimize.minimize(
+                fidelity_objective, init_z,
+                method='SLSQP', bounds=extend,
+                constraints=constraint, options=options)
 
         z = np.ones_like(self.use_fidelity, dtype=np.float)
+        self.info['minimize_success'] = bool(result['success'])
         if result['success']:
             z[self.use_fidelity] = result['x']
         else:
