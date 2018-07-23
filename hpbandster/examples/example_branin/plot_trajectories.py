@@ -3,10 +3,12 @@ import glob
 import pickle
 import sys
 import argparse
+import re
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from typing import Set
 
 
 def extract_result(results_object):
@@ -191,34 +193,54 @@ def load_trajectories(config_id, working_dir: str = '.'):
     }
 
 
+def get_config_ids(param: argparse.Namespace) -> Set[int]:
+    if not param.all:
+        return [
+            'randomsearch-',
+            'hyperband_propto_budget_z0-',
+            'hyperband_propto_budget_z1-',
+            'hyperband_propto_budget_z2-',
+            'hyperband_propto_budget_z0_z1_z2-',
+            'hyperband_fid_propto_cost-',
+        ]
+
+    regex = re.compile("results\.{}-([^-]+-)[0-9]+\.pkl".format(param.run_filter))
+    config_ids = set()
+    for filename in glob.glob(os.path.join(param.working_dir, "results.*pkl")):
+        result = regex.search(filename)
+        if result and result[1] not in config_ids:
+            config_ids.add(result[1])
+    return config_ids
+
+
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter plot trajectories utility functions.')
-    parser.add_argument('--working-dir',
-                        help='Folder to search for result files.',
-                        type=str,
-                        default='.')
-    parser.add_argument('--run-filter',
-                        help='Search for results.<run-filter>...pkl files.',
-                        type=str,
-                        required=True)
+    parser.add_argument(
+        '--working-dir',
+        help='Folder to search for result files.',
+        type=str,
+        default='.')
+    parser.add_argument(
+        '--run-filter',
+        help='Search for results.<run-filter>...pkl files.',
+        type=str,
+        required=True)
+    parser.add_argument(
+        '--all',
+        help='Show all config_ids',
+        type=bool,
+        default=True)
     return parser.parse_args()
 
 
 def main():
     cli_param = parse_cli()
-    all_losses = {config_id: load_trajectories('{}-{}'.format(cli_param.run_filter, config_id),
-                                               cli_param.working_dir)
-                  for config_id in [
-                      'randomsearch-',
-                      'hyperband_propto_budget_z0-',
-                      'hyperband_propto_budget_z1-',
-                      'hyperband_propto_budget_z2-',
-                      'hyperband_propto_budget_z0_z1_z2-',
-                      'hyperband_fid_propto_cost_z0-',
-                      'hyperband_fid_propto_cost_z1-',
-                      'hyperband_fid_propto_cost_z2-',
-                      'hyperband_fid_propto_cost_z0_z1_z2-',
-                      ]}
+    all_losses = {
+        config_id: load_trajectories(
+            '{}-{}'.format(cli_param.run_filter, config_id),
+            cli_param.working_dir)
+        for config_id in get_config_ids(cli_param)
+    }
 
     plot_losses(all_losses, 'Branin', show=True)
 
