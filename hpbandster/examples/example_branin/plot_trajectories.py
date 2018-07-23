@@ -8,7 +8,7 @@ import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import Set
+from typing import List
 
 
 def extract_result(results_object):
@@ -193,7 +193,7 @@ def load_trajectories(config_id, working_dir: str = '.'):
     }
 
 
-def get_config_ids(param: argparse.Namespace) -> Set[int]:
+def get_config_ids(param: argparse.Namespace) -> List[int]:
     if not param.all:
         return [
             'randomsearch-',
@@ -210,7 +210,7 @@ def get_config_ids(param: argparse.Namespace) -> Set[int]:
         result = regex.search(filename)
         if result and result[1] not in config_ids:
             config_ids.add(result[1])
-    return config_ids
+    return sorted(config_ids, reverse=True)
 
 
 def parse_cli() -> argparse.Namespace:

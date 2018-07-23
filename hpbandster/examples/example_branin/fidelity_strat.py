@@ -88,7 +88,7 @@ class FidelityPropToCost(FidelityStrat):
             alpha: float = 1.):
         self.use_fidelity = np.array(use_fidelity, dtype=np.bool)
         fidelities = ['z{}'.format(i) for i, v in enumerate(self.use_fidelity) if v]
-        super().__init__('fid_propto_cost_{}'.format('_'.join(fidelities)))
+        super().__init__('propto_cost_{}'.format('_'.join(fidelities)))
 
         self.cost = problem.cost
         self.max_cost = problem.cost(*np.ones(self._num_fidelities))
