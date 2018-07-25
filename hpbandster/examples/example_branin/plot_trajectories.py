@@ -175,14 +175,14 @@ def plot_losses(incumbent_trajectories, title, regret=True, incumbent=None,
     return (fig, ax)
 
 
-def load_trajectories(config_id, working_dir: str = '.'):
+def load_trajectories(config_id, time_col: str, working_dir: str = '.'):
     df = pd.DataFrame()
     for fn in glob.glob(os.path.join(working_dir, 'results.{}*.pkl'.format(config_id))):
         print('Load {} ...'.format(fn), end="\r")
         with open(fn, 'rb') as fh:
             result = pickle.load(fh)
         datum = extract_result(result)
-        times = np.array(datum['cummulative_cost'])
+        times = np.array(datum[time_col])
         tmp = pd.DataFrame({fn: datum['losses']}, index=times)
         df = df.join(tmp, how='outer')
     df = fill_trajectories(df)
@@ -230,6 +230,11 @@ def parse_cli() -> argparse.Namespace:
         help='Show all config_ids',
         type=bool,
         default=True)
+    parser.add_argument(
+        '--time-column',
+        help='Data column shown as x-axis. Usually "cummulated_cost" or "times_finished".',
+        type=str,
+        required=True)
     return parser.parse_args()
 
 
@@ -238,6 +243,7 @@ def main():
     all_losses = {
         config_id: load_trajectories(
             '{}-{}'.format(cli_param.run_filter, config_id),
+            cli_param.time_column,
             cli_param.working_dir)
         for config_id in get_config_ids(cli_param)
     }
