@@ -24,19 +24,19 @@ strategies:
     use_fidelity: [True, True, True]
   - name: 'proptocost'
     label: 's5'
-    problem: 'p1'
+    problem: 'p0'
     use_fidelity: [True, False, False]
   - name: 'proptocost'
     label: 's6'
-    problem: 'p1'
+    problem: 'p0'
     use_fidelity: [False, True, False]
   - name: 'proptocost'
     label: 's7'
-    problem: 'p1'
+    problem: 'p0'
     use_fidelity: [False, False, True]
   - name: 'proptocost'
     label: 's8'
-    problem: 'p1'
+    problem: 'p0'
     use_fidelity: [True, True, True]
 
 runs:
