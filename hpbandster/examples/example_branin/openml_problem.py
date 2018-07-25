@@ -48,7 +48,7 @@ class OpenMLRF(Problem):
         scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
                                                          scoring='f1', cv=3,
                                                          pre_dispatch=1, n_jobs=1)
-        return np.mean(scores)
+        return 1 - np.mean(scores)
 
     @staticmethod
     def build_config_space() -> CS.ConfigurationSpace:
@@ -85,7 +85,7 @@ class OpenMLGB(Problem):
         scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
                                                          scoring='f1', cv=3,
                                                          pre_dispatch=1, n_jobs=1)
-        return np.mean(scores)
+        return 1 - np.mean(scores)
 
     @staticmethod
     def _from_fidelities(fidelities: List[float]):
