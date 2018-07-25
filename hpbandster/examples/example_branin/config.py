@@ -7,6 +7,7 @@ import numpy as np
 from hpbandster.optimizers import HyperBand, RandomSearch
 
 import branin
+import openml_problem
 from problem import Problem
 import fidelity_strat as strat
 
@@ -187,6 +188,10 @@ def load_problems(problems: dict) -> dict:
 
         if name == 'branin':
             obj = branin.Branin(**p)
+        elif name == 'openmlrf':
+            obj = openml_problem.OpenMLRF(**p)
+        elif name == 'openmlgb':
+            obj = openml_problem.OpenMLGB(**p)
         else:
             raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
 
