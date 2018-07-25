@@ -1,0 +1,70 @@
+num_hb_runs: 15
+num_runs: 128
+
+problems:
+  - name: 'OpenmlGB'
+    label: 'p0'
+    task_id: 49 # tic-tac-toe
+
+strategies:
+  - name: 'full'
+    label: 's0'
+    num_fidelities: 3
+  - name: 'proptobudget'
+    label: 's1'
+    use_fidelity: [True, False, False]
+  - name: 'proptobudget'
+    label: 's2'
+    use_fidelity: [False, True, False]
+  - name: 'proptobudget'
+    label: 's3'
+    use_fidelity: [False, False, True]
+  - name: 'proptobudget'
+    label: 's4'
+    use_fidelity: [True, True, True]
+  - name: 'proptocost'
+    label: 's5'
+    problem: 'p1'
+    use_fidelity: [True, False, False]
+  - name: 'proptocost'
+    label: 's6'
+    problem: 'p1'
+    use_fidelity: [False, True, False]
+  - name: 'proptocost'
+    label: 's7'
+    problem: 'p1'
+    use_fidelity: [False, False, True]
+  - name: 'proptocost'
+    label: 's8'
+    problem: 'p1'
+    use_fidelity: [True, True, True]
+
+runs:
+  - name: 'RandomSearch'
+    displayname: 'rf'
+    problem: 'p0'
+    strategy: 's0'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's1'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's2'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's3'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's4'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's5'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's6'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's7'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's8'
