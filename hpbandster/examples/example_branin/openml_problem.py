@@ -1,11 +1,16 @@
 from typing import List
+import warnings
 
 import ConfigSpace as CS
 import numpy as np
 import openml
-import sklearn
+import sklearn.ensemble
+import sklearn.model_selection
 
 from problem import Problem
+
+
+warnings.filterwarnings("ignore", ".*n_jobs=1.*")
 
 
 def _int_fraction(perc: float, start: int, end: int):
@@ -18,11 +23,11 @@ def _float_fraction(perc: float, start: float, end: float):
 
 class OpenMLRF(Problem):
     def __init__(self, task_id: int):
-        task = openml.tasks.get_task(task_id)
-        self.data = task.get_X_and_y()
+        self.task = openml.tasks.get_task(task_id)
+        self.data = self.task.get_X_and_y()
 
     def __repr__(self):
-        pass
+        return 'Problem RandomForrest on task {}'.format(self.task.task_id)
 
     def cost(self, *args: float) -> float:
         n_trees, n_samples_per_tree, n_classes = args
@@ -33,14 +38,16 @@ class OpenMLRF(Problem):
         n_trees = _int_fraction(fidelities[0], 5, 20)
         n_samples_per_tree = _int_fraction(fidelities[1], 2, 10)
         n_classes = _int_fraction(fidelities[2], 2, 10)
-
         model = sklearn.ensemble.RandomForestClassifier(n_estimators=n_trees,
                                                         max_depth=config['max_depth'],
-                                                        min_samples_leaf=config['min_samples_leaf'])
+                                                        min_samples_leaf=config['min_samples_leaf'],
+                                                        n_jobs=1)
+
         X = self.data[0]
         y = self.data[1]
         scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
-                                                         scoring='l2', cv=3)
+                                                         scoring='f1', cv=3,
+                                                         pre_dispatch=1, n_jobs=1)
         return np.mean(scores)
 
     @staticmethod
@@ -55,11 +62,11 @@ class OpenMLRF(Problem):
 
 class OpenMLGB(Problem):
     def __init__(self, task_id: int):
-        task = openml.tasks.get_task(task_id)
-        self.data = task.get_X_and_y()
+        self.task = openml.tasks.get_task(task_id)
+        self.data = self.task.get_X_and_y()
 
     def __repr__(self):
-        pass
+        return 'Problem Gradient Boosted Trees on task {}'.format(self.task.task_id)
 
     def cost(self, *args: float) -> float:
         n_stages, subsamples, max_depth = self._from_fidelities(args)
@@ -76,7 +83,8 @@ class OpenMLGB(Problem):
         X = self.data[0]
         y = self.data[1]
         scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
-                                                         scoring='l2', cv=3)
+                                                         scoring='f1', cv=3,
+                                                         pre_dispatch=1, n_jobs=1)
         return np.mean(scores)
 
     @staticmethod
