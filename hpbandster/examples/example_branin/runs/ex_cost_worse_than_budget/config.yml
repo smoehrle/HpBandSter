@@ -4,14 +4,14 @@ num_runs: 256
 problems:
   - name: 'Branin'
     label: 'p1'
-    pow_z1: 3.
+    pow_z1: 1.
     pow_z2: 1.
     pow_z3: 1.
     deviation: 'boca'
     deviation_kwargs:
-       bz: 0.05
-       cz: 1.
-       tz: 1.
+       bz: -1.5
+       cz: 2.
+       tz: 2.
 
 strategies:
   - name: 'full'

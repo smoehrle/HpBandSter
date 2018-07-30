@@ -1,0 +1,50 @@
+num_hb_runs: 15
+num_runs: 256
+
+problems:
+  - name: 'Branin'
+    label: 'p1'
+    pow_z1: 1.
+    pow_z2: 1.
+    pow_z3: 1.
+    deviation: 'boca'
+    deviation_kwargs:
+       bz: 0.
+       cz: 0.
+       tz: 2.
+  - name: 'Branin'
+    label: 'p2'
+    pow_z1: 1.
+    pow_z2: 1.
+    pow_z3: 1.
+    deviation: 'boca'
+    deviation_kwargs:
+       bz: 0.
+       cz: 0.
+       tz: -1.25
+
+strategies:
+  - name: 'full'
+    label: 's0'
+    num_fidelities: 3
+  - name: 'proptobudget'
+    label: 's1'
+    use_fidelity: [False, False, True]
+
+runs:
+  - name: 'RandomSearch'
+    problem: 'p1'
+    strategy: 's0'
+    displayname: 'rs_p1'
+  - name: 'RandomSearch'
+    problem: 'p2'
+    strategy: 's0'
+    displayname: 'rs_p2'
+  - name: 'HyperBand'
+    problem: 'p1'
+    strategy: 's1'
+    displayname: 'hb_p1'
+  - name: 'HyperBand'
+    problem: 'p2'
+    strategy: 's1'
+    displayname: 'hb_p2'
