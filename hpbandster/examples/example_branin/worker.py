@@ -60,8 +60,13 @@ class SimM2FWorker(Worker):
         """
         norm_budget = util.normalize_budget(budget, self.max_budget)
         z = self.strategie.calc_fidelities(norm_budget)
+
+        # Temporary (discuss with David)
         cost = self.problem.cost(*z)
-        loss = self.problem.calc_loss(config, z)
+        if cost is None:
+            loss, cost = self.problem.calc_loss(config, z, kwargs['config_id'])
+        else:
+            loss = self.problem.calc_loss(config, z)
 
         return({
             'loss': loss,  # this is the a mandatory field to run hyperband
