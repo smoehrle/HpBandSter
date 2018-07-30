@@ -6,6 +6,7 @@ import yaml
 import numpy as np
 from hpbandster.optimizers import HyperBand, RandomSearch
 
+import algorithm_configuration
 import branin
 import openml_problem
 from problem import Problem
@@ -192,6 +193,8 @@ def load_problems(problems: dict) -> dict:
             obj = openml_problem.OpenMLRF(**p)
         elif name == 'openmlgb':
             obj = openml_problem.OpenMLGB(**p)
+        elif name == 'ac':
+            obj = algorithm_configuration.AlgorithmConfiguration(**p)
         else:
             raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
 

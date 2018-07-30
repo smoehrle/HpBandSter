@@ -232,9 +232,9 @@ def parse_cli() -> argparse.Namespace:
         default=True)
     parser.add_argument(
         '--time-column',
-        help='Data column shown as x-axis. Usually "cummulated_cost" or "times_finished".',
+        help='Data column shown as x-axis. Usually "cummulative_cost" or "times_finished".',
         type=str,
-        required=True)
+        default='cummulative_cost')
     return parser.parse_args()
 
 
