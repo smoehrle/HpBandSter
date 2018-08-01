@@ -62,7 +62,7 @@ class SimM2FWorker(Worker):
         z = self.strategie.calc_fidelities(norm_budget)
 
         # Temporary (discuss with David)
-        cost = self.problem.cost(*z)
+        cost = self.problem.cost(*z, config=config)
         if cost is None:
             loss, cost = self.problem.calc_loss(config, z, kwargs['config_id'])
         else:

@@ -29,17 +29,21 @@ class OpenMLRF(Problem):
     def __repr__(self):
         return 'Problem RandomForrest on task {}'.format(self.task.task_id)
 
-    def cost(self, *args: float) -> float:
-        n_trees, n_samples_per_tree, n_classes = args
-        # ??? Is this correct ???
-        return n_trees * n_samples_per_tree * n_classes
+    def _from_fidelities(self, fidelities: List[float], config: CS.Configuration):
+        n_trees = _int_fraction(fidelities[0], 20, 2000)
+        max_depth = _int_fraction(fidelities[1], 2, 10)
+        return n_trees, max_depth
+
+    def cost(self, *args: float, config=None)-> float:
+        n_trees, max_depth = self._from_fidelities(args, config)
+        return n_trees * max_depth
 
     def calc_loss(self, config: CS.Configuration, fidelities: np.ndarray) -> float:
-        n_trees = _int_fraction(fidelities[0], 5, 20)
-        n_samples_per_tree = _int_fraction(fidelities[1], 2, 10)
-        n_classes = _int_fraction(fidelities[2], 2, 10)
+        n_trees, max_depth = self._from_fidelities(fidelities, config)
         model = sklearn.ensemble.RandomForestClassifier(n_estimators=n_trees,
-                                                        max_depth=config['max_depth'],
+                                                        max_depth=max_depth,
+                                                        criterion=config['criterion'],
+                                                        max_features=config['max_features'],
                                                         min_samples_leaf=config['min_samples_leaf'],
                                                         n_jobs=1,
                                                         bootstrap=True,
@@ -52,8 +56,10 @@ class OpenMLRF(Problem):
     def build_config_space() -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
-            CS.UniformIntegerHyperparameter('max_depth', lower=10, upper=100),
-            CS.UniformIntegerHyperparameter('min_samples_leaf', lower=1, upper=4),
+            CS.CategoricalHyperparameter('criterion', choices=['gini', 'entropy']),
+            CS.CategoricalHyperparameter('max_features', choices=['sqrt', 'log2', None]),
+            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=2000, log=True),
+            CS.UniformIntegerHyperparameter('min_samples_leaf', lower=1, upper=10),
         ])
         return config_space
 
@@ -66,28 +72,27 @@ class OpenMLGB(Problem):
     def __repr__(self):
         return 'Problem Gradient Boosted Trees on task {}'.format(self.task.task_id)
 
-    def cost(self, *args: float) -> float:
+    def cost(self, *args: float, **kwargs) -> float:
         n_stages, subsamples, max_depth = self._from_fidelities(args)
-        # ??? Is this correct ???
-        return n_stages * subsamples * np.log(max_depth)
+        return n_stages * subsamples * max_depth
 
     def calc_loss(self, config: CS.Configuration, fidelities: np.ndarray) -> float:
         n_stages, subsamples, max_depth = self._from_fidelities(fidelities)
         model = sklearn.ensemble.GradientBoostingClassifier(n_estimators=n_stages,
                                                             max_depth=max_depth,
                                                             subsample=subsamples,
+                                                            max_features=config['max_features'],
                                                             learning_rate=config['learning_rate'],
                                                             min_samples_leaf=config['min_samples_leaf'])
-        X = self.data[0]
-        y = self.data[1]
-        scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
-                                                         scoring='f1', cv=3,
-                                                         pre_dispatch=1, n_jobs=1)
-        return 1 - np.mean(scores)
+        X, y = self.data
+        X_train, X_test, y_train, y_test =\
+            sklearn.model_selection.train_test_split(X, y, test_size=0.3)
+        model.fit(X_train, y_train)
+        acc = model.score(X_test, y_test)
+        return 1. - acc
 
-    @staticmethod
-    def _from_fidelities(fidelities: List[float]):
-        n_stages = _int_fraction(fidelities[0], 5, 20)
+    def _from_fidelities(self, fidelities: List[float]):
+        n_stages = _int_fraction(fidelities[0], 20, 200)
         subsamples = _float_fraction(fidelities[1], 0.1, 1)
         max_depth = _int_fraction(fidelities[2], 2, 10)
         return n_stages, subsamples, max_depth
@@ -98,5 +103,6 @@ class OpenMLGB(Problem):
         config_space.add_hyperparameters([
             CS.UniformFloatHyperparameter('learning_rate', lower=0.01, upper=1., log=True),
             CS.UniformIntegerHyperparameter('min_samples_leaf', lower=1, upper=4),
+            CS.CategoricalHyperparameter('max_features', choices=['sqrt', 'log2', None]),
         ])
         return config_space
