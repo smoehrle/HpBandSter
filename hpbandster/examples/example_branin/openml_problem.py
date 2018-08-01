@@ -41,14 +41,12 @@ class OpenMLRF(Problem):
         model = sklearn.ensemble.RandomForestClassifier(n_estimators=n_trees,
                                                         max_depth=config['max_depth'],
                                                         min_samples_leaf=config['min_samples_leaf'],
-                                                        n_jobs=1)
-
-        X = self.data[0]
-        y = self.data[1]
-        scores = sklearn.model_selection.cross_val_score(model, X=X, y=y,
-                                                         scoring='f1', cv=3,
-                                                         pre_dispatch=1, n_jobs=1)
-        return 1 - np.mean(scores)
+                                                        n_jobs=1,
+                                                        bootstrap=True,
+                                                        oob_score=True)
+        X, y = self.data
+        model.fit(X, y)
+        return model.oob_score_
 
     @staticmethod
     def build_config_space() -> CS.ConfigurationSpace:
