@@ -138,7 +138,7 @@ class HyperBandConfig(RunConfig):
         return self._problem
 
 
-def load(file_path: str) -> ExperimentConfig:
+def load(file_path: str, run_id: str) -> ExperimentConfig:
     """
     Load a config by the given filepath. Working_dir is autmatically set
     to the config location.
@@ -156,7 +156,7 @@ def load(file_path: str) -> ExperimentConfig:
         dict_ = yaml.load(f)
     dict_['working_dir'] = os.path.dirname(file_path)
 
-    problems = load_problems(dict_['problems'])
+    problems = load_problems(dict_['problems'], run_id)
     del dict_['problems']
     strategies = load_strategies(problems, dict_['strategies'])
     del dict_['strategies']
@@ -176,7 +176,7 @@ def load(file_path: str) -> ExperimentConfig:
     return ExperimentConfig(**dict_)
 
 
-def load_problems(problems: dict) -> dict:
+def load_problems(problems: dict, run_id: str) -> dict:
     if not problems:
         raise LookupError('No problem instances defined!')
 
@@ -194,6 +194,7 @@ def load_problems(problems: dict) -> dict:
         elif name == 'openmlgb':
             obj = openml_problem.OpenMLGB(**p)
         elif name == 'ac':
+            p['seed'] = run_id
             obj = algorithm_configuration.AlgorithmConfiguration(**p)
         else:
             raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
