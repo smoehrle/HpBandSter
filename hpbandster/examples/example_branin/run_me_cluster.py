@@ -74,7 +74,7 @@ def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: config.E
 
 
 def main():
-    #logging.basicConfig(level=logging.wARNING)
+    logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger()
     args = parse_cli()
     # Fix nameserver colision on cluster

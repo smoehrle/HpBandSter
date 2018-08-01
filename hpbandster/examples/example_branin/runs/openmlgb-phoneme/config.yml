@@ -1,10 +1,10 @@
 num_hb_runs: 15
-num_runs: 128
+num_runs: 64
 
 problems:
   - name: 'OpenmlGB'
     label: 'p0'
-    task_id: 49 # tic-tac-toe
+    task_id: 9952  # phoneme
 
 strategies:
   - name: 'full'
