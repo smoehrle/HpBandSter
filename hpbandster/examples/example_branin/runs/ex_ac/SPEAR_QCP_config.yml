@@ -4,7 +4,7 @@ num_runs: 256
 problems:
   - name: 'ac'
     label: 'p0'
-    tarfile: '/home/stefan/Downloads/data.tar.gz'
+    tarfile: '/home/moehrles/data.tar.gz'
     dataset_name: 'SPEAR_QCP'
 
 strategies:
