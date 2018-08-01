@@ -17,6 +17,9 @@ strategies:
   - name: 'proptobudget'
     label: 's2'
     use_fidelity: [False, True]
+  - name: 'proptobudget'
+    label: 's3'
+    use_fidelity: [True, True]
 
 
 runs:
@@ -29,3 +32,6 @@ runs:
   - name: 'HyperBand'
     problem: 'p0'
     strategy: 's2'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's3'
