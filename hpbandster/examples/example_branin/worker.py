@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import ConfigSpace as CS
 from typing import Callable
@@ -58,6 +59,8 @@ class SimM2FWorker(Worker):
         -------
         dict with the 'loss' and another 'info'-dict.
         """
+        time.sleep(0.01)
+
         norm_budget = util.normalize_budget(budget, self.max_budget)
         z = self.strategie.calc_fidelities(norm_budget)
 

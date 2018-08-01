@@ -55,7 +55,7 @@ class AlgorithmConfiguration(Problem):
     def __repr__(self):
         return "AC_{}".format(self.dataset_name)
 
-    def cost(self, *args: float) -> float:
+    def cost(self, *args: float, **kwargs) -> float:
         return None
 
     def calc_loss(self, config: CS.ConfigurationSpace, fidelities: np.ndarray, config_id: tuple) -> (float, float):
