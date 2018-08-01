@@ -14,6 +14,9 @@ datasets = {
     'SPEAR_QCP': Dataset(
         filename='data/AMAI_data/SPEAR/random-SPEAR-QCP-5s-results-1000train-1000test.txt',
         max_cutoff=50, time_scale_factor=10),
+    'SPEAR_SWGCP': Dataset(
+        filename='data/AMAI_data/SPEAR/random-SPEAR-SWGCP-5s-results-1000train-1000test.txt',
+        max_cutoff=50, time_scale_factor=10),
 }
 
 
