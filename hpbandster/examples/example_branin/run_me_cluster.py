@@ -79,7 +79,7 @@ def main():
     args = parse_cli()
     # Fix nameserver colision on cluster
     run_id_combined = args.run_id + str(args.task_id) if args.task_id else args.run_id
-    cfg = config.load(args.config)
+    cfg = config.load(args.config, run_id_combined)
     logger.info(cfg)
 
     if not args.master and not args.worker:

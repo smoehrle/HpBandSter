@@ -1,0 +1,31 @@
+num_hb_runs: 15
+num_runs: 256
+
+problems:
+  - name: 'ac'
+    label: 'p0'
+    tarfile: '/home/stefan/Downloads/data.tar.gz'
+    dataset_name: 'SPEAR_QCP'
+
+strategies:
+  - name: 'full'
+    label: 's0'
+    num_fidelities: 2
+  - name: 'proptobudget'
+    label: 's1'
+    use_fidelity: [True, False]
+  - name: 'proptobudget'
+    label: 's2'
+    use_fidelity: [False, True]
+
+
+runs:
+  - name: 'RandomSearch'
+    problem: 'p0'
+    strategy: 's0'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's1'
+  - name: 'HyperBand'
+    problem: 'p0'
+    strategy: 's2'
