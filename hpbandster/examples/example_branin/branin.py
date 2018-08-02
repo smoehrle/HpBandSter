@@ -82,7 +82,7 @@ class Branin(Problem):
     def __repr__(self):
         return "Branin Problem"
 
-    def calc_loss(self, config: CS.ConfigurationSpace, fidelities: np.ndarray):
+    def calc_loss(self, config: CS.ConfigurationSpace, fidelities: CS.Configuration):
         """
         Calculate the loss for given configuration and fidelities
 
@@ -97,8 +97,19 @@ class Branin(Problem):
         -------
             The loss
         """
-        y = self.calc_noisy(config['x1'], config['x2'], *fidelities)
+        y = self.calc_noisy(config['x1'], config['x2'],
+                            fidelities['z1'], fidelities['z2'], fidelities['z3'])
         return np.abs(self.min - y)
+
+    @staticmethod
+    def build_fidelity_space() -> CS.ConfigurationSpace:
+        config_space = CS.ConfigurationSpace()
+        config_space.add_hyperparameters([
+            CS.UniformFloatHyperparameter('z1', lower=0., upper=1.),
+            CS.UniformFloatHyperparameter('z2', lower=0., upper=1.),
+            CS.UniformFloatHyperparameter('z3', lower=0., upper=1.),
+        ])
+        return config_space
 
     @staticmethod
     def build_config_space() -> CS.ConfigurationSpace:
@@ -112,7 +123,7 @@ class Branin(Problem):
         config_space.add_hyperparameter(CS.UniformFloatHyperparameter('x2', lower=0, upper=15))
         return config_space
 
-    def cost(self, z1, z2, z3) -> float:
+    def _cost(self, fidelities: CS.Configuration) -> float:
         """
         Cost function which calculates the cost for given fidelity parameters.
         This cost function is based on the BOCA paper
@@ -126,7 +137,9 @@ class Branin(Problem):
         -------
         The cost
         """
-        return 0.05 + ((1 + z1)**self.pow_z1 * (1 + z2)**self.pow_z2 * (1 + z3)**self.pow_z3)
+        return 0.05 + ((1 + fidelities['z1'])**self.pow_z1
+                       * (1 + fidelities['z2'])**self.pow_z2
+                       * (1 + fidelities['z3'])**self.pow_z3)
 
     def calc_noisy(
             self,

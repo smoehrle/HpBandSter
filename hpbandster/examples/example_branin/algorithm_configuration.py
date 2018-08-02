@@ -55,10 +55,10 @@ class AlgorithmConfiguration(Problem):
     def __repr__(self):
         return "AC_{}".format(self.dataset_name)
 
-    def cost(self, *args: float, **kwargs) -> float:
+    def _cost(self, *args: float, **kwargs) -> float:
         return None
 
-    def calc_loss(self, config: CS.ConfigurationSpace, fidelities: np.ndarray, config_id: tuple) -> (float, float):
+    def calc_loss(self, config: CS.Configuration, fidelities: CS.Configuration, config_id: tuple) -> (float, float):
         """
         Calculate the loss for given configuration and fidelities
 
@@ -79,25 +79,23 @@ class AlgorithmConfiguration(Problem):
             Since the cost is dependent on the configuration, it cannot be calculated independently 
         """
         self.logger.debug("___CALC_LOSS___{}".format(config_id))
-        self.logger.debug("Config: {}, Fidelity: {}, {}".format(config['x'], fidelities[0], fidelities[1]))
-        if fidelities[0] < 1:
-            num_instances = int(self.num_instances * fidelities[0])
+        self.logger.debug("Config: {}, Fidelity: {}, {}".format(config['x'], fidelities['n_instances'], fidelities['cutoff']))
+        if fidelities['n_instances'] < self.num_instances:
             # Seed random generator with iteration id. This ensures that the same instances
             # are compared in the same iteration
             # Problem: since the seed is not run but only iteration dependend the same
             # problem instances are evaluated across different runs 
             np.random.seed(self.generate_seed(config_id[0]))
-            i = sorted(np.random.choice(self.num_instances, num_instances, replace=False))
+            i = sorted(np.random.choice(self.num_instances,
+                                        fidelities['n_instances'],
+                                        replace=False))
         else:
             i = range(self.num_instances)
         len_i = len(i)
         max_samples = 10 if len_i > 10 else len_i
         self.logger.debug("Len: {}, samples: {}...".format(len_i, i[0:max_samples]))
 
-        if fidelities[1] < 1:
-            cutoff_time = fidelities[1] * (self.dataset.max_cutoff - self.min_cutoff) + self.min_cutoff
-        else:
-            cutoff_time = self.dataset.max_cutoff
+        cutoff_time = fidelities['cutoff']
         self.logger.debug("Cutoff time: {}".format(cutoff_time))
 
         results = self.instance_config_result_matix[i, config['x']]
@@ -108,6 +106,14 @@ class AlgorithmConfiguration(Problem):
         self.logger.debug("Loss: {}".format(loss))
         return loss, loss / self.dataset.time_scale_factor
 
+    def build_fidelity_space(self) -> CS.ConfigurationSpace:
+        cs = CS.ConfigurationSpace()
+        cs.add_hyperparameters([
+            CS.UniformIntegerHyperparameter('n_instances', lower=0, upper=self.num_instances),
+            CS.UniformFloatHyperparameter('cutoff', lower=self.min_cutoff, upper=self.max_cutoff),
+        ])
+        return cs
+
     def build_config_space(self) -> CS.ConfigurationSpace:
         """
         Returns
@@ -117,7 +123,8 @@ class AlgorithmConfiguration(Problem):
             The only hyperparameter for this problem is the index which selects the predefined algorithm configuration
         """
         config_space = CS.ConfigurationSpace()
-        config_space.add_hyperparameter(CS.UniformIntegerHyperparameter('x', lower=0, upper=self.num_configs-1))
+        config_space.add_hyperparameter(
+            CS.UniformIntegerHyperparameter('x', lower=0, upper=self.num_configs-1))
         return config_space
 
     def generate_seed(self, iteration):
