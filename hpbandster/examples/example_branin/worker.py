@@ -1,11 +1,9 @@
 import time
 import numpy as np
 import ConfigSpace as CS
-from typing import Callable
 
 from hpbandster.core.worker import Worker
 
-import branin
 import fidelity_strat
 import problem
 import util
@@ -40,12 +38,12 @@ class SimM2FWorker(Worker):
 
         super().__init__(*args, **kwargs)
         self.problem = problem
-        self.strategie = strategy
+        self.strategy = strategy
         self.max_budget = max_budget
 
     def compute(self, config: CS.ConfigurationSpace, budget: float, *args, **kwargs) -> dict:
         """
-        Simple compute function which evaluates a noisy branin function for
+        Simple compute function which evaluates problem and strategy functions for
         given parameters and budget
 
         Parameters
@@ -62,22 +60,23 @@ class SimM2FWorker(Worker):
         time.sleep(0.01)
 
         norm_budget = util.normalize_budget(budget, self.max_budget)
-        z = self.strategie.calc_fidelities(norm_budget)
-
+        z = self.strategy.calc_fidelities(norm_budget)
         # Temporary (discuss with David)
-        cost = self.problem.cost(*z, config=config)
+        fid_config = self.problem.fidelity_config(fidelity_vector=z)
+        cost = self.problem.cost(fidelity_config=fid_config)
         if cost is None:
-            loss, cost = self.problem.calc_loss(config, z, kwargs['config_id'])
+            loss, cost = self.problem.calc_loss(config, fid_config, kwargs['config_id'])
         else:
-            loss = self.problem.calc_loss(config, z)
+            loss = self.problem.calc_loss(config, fid_config)
 
         return({
             'loss': loss,  # this is the a mandatory field to run hyperband
             'info': {   # can be used for any user-defined information - also mandatory
                 'cost': cost,
-                'fidelity': np.array2string(z),
-                'fidelity_strategy': repr(self.strategie),
-                'strategy_info': self.strategie.info,
+                'fidelity_vector': np.array2string(z),
+                'fidelity_config': repr(fid_config),
+                'fidelity_strategy': repr(self.strategy),
+                'strategy_info': self.strategy.info,
                 'problem': repr(self.problem),
             }
         })

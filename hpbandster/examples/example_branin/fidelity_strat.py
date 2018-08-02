@@ -1,9 +1,9 @@
-import collections
-from typing import Callable, Optional, Iterable
+from typing import Iterable
 import logging
 
 import numpy as np
 import scipy.optimize
+import ConfigSpace as CS
 
 from problem import Problem
 
@@ -90,8 +90,8 @@ class FidelityPropToCost(FidelityStrat):
         fidelities = ['z{}'.format(i) for i, v in enumerate(self.use_fidelity) if v]
         super().__init__('propto_cost_{}'.format('_'.join(fidelities)))
 
-        self.cost = problem.cost
-        self.max_cost = problem.cost(*np.ones(self._num_fidelities))
+        self.problem = problem
+        self.max_cost = problem.cost(fidelity_vector=np.ones(self._num_fidelities))
         self.alpha = alpha
         self.logger = logging.getLogger()
 
@@ -107,7 +107,7 @@ class FidelityPropToCost(FidelityStrat):
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            return (b - self.cost(*Z) / self.max_cost)**2
+            return (b - self.problem.cost(fidelity_vector=Z) / self.max_cost)**2
 
         def fidelity_objective(z: np.ndarray):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
