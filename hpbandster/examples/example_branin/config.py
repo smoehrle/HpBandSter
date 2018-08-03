@@ -1,6 +1,6 @@
 import os
 from typing import Dict
-from collections import namedtuple
+from collections import namedtuple, Mapping
 
 import yaml
 import numpy as np
@@ -138,6 +138,22 @@ class HyperBandConfig(RunConfig):
         return self._problem
 
 
+def _merge_dicts(base: Dict, ext: Dict, overwrite: bool) -> Dict:
+    merge = base.copy()
+    for k, ext_v in ext.items():
+        if k in base:
+            base_v = base[k]
+            if isinstance(base_v, Mapping) and isinstance(ext_v, Mapping):
+                ext_v = _merge_dicts(base_v, ext_v)
+            elif not overwrite:
+                raise ValueError('Found key {} in base and extension dict, '
+                                 'expected values to be dicts to merge, '
+                                 'but found {} and {}.'
+                                 .format(k, repr(base_v), repr(ext_v)))
+        merge[k] = ext_v
+    return merge
+
+
 def load(file_path: str, run_id: str) -> ExperimentConfig:
     """
     Load a config by the given filepath. Working_dir is autmatically set
@@ -154,6 +170,12 @@ def load(file_path: str, run_id: str) -> ExperimentConfig:
     """
     with open(file_path, 'r') as f:
         dict_ = yaml.load(f)
+    if 'extend' in dict_:
+        base_file_path = os.path.join(os.path.dirname(file_path), dict_['extend'])
+        del dict_['extend']
+        with open(base_file_path, 'r') as f:
+            base_ = yaml.load(f)
+        dict_ = _merge_dicts(base_, dict_, overwrite=True)
     dict_['working_dir'] = os.path.dirname(file_path)
 
     problems = load_problems(dict_['problems'], run_id)
