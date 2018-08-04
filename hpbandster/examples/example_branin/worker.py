@@ -65,7 +65,8 @@ class SimM2FWorker(Worker):
         fid_config = self.problem.fidelity_config(fidelity_vector=z)
         cost = self.problem.cost(fidelity_config=fid_config)
         if cost is None:
-            loss, cost = self.problem.calc_loss(config, fid_config, kwargs['config_id'])
+            # Propably better to change the return type into a dict or something..
+            loss, cost, test_loss = self.problem.calc_loss(config, fid_config, kwargs['config_id'])
         else:
             loss = self.problem.calc_loss(config, fid_config)
 
@@ -78,5 +79,6 @@ class SimM2FWorker(Worker):
                 'fidelity_strategy': repr(self.strategy),
                 'strategy_info': self.strategy.info,
                 'problem': repr(self.problem),
+                'test_loss': test_loss if test_loss else None,
             }
         })
