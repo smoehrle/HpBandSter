@@ -1,4 +1,5 @@
 import logging
+import random
 import tarfile as tar
 from collections import namedtuple
 
@@ -31,7 +32,16 @@ class AlgorithmConfiguration(Problem):
 
         self.dataset_name = dataset_name
         self.dataset = datasets[dataset_name]
-        self.seed = seed
+
+        if type(seed) is int:
+            self.seed = seed
+
+        if type(seed) is str:
+            self.seed = int.from_bytes(seed.encode(), byteorder='big')
+
+        if not self.seed:
+            raise Exception("Currently only 'str' and 'int' seeds are supported.")
+
         self.logger.debug("___AC_INIT___")
         self.logger.debug("Seed: {}".format(seed))
 
@@ -85,7 +95,9 @@ class AlgorithmConfiguration(Problem):
             # are compared in the same iteration
             # Problem: since the seed is not run but only iteration dependend the same
             # problem instances are evaluated across different runs 
-            np.random.seed(self.generate_seed(config_id[0]))
+            seed = self.generate_seed(config_id[0])
+            print("ConfigId: {}, Seed: {}".format(config_id[0], seed))
+            np.random.seed(seed)
             i = sorted(np.random.choice(self.num_instances,
                                         fidelities['n_instances'],
                                         replace=False))
@@ -100,8 +112,8 @@ class AlgorithmConfiguration(Problem):
 
         loss = self._calc_loss(self.instance_config_result_matix[i, config['x']], cutoff_time)
         test_loss = self._calc_loss(self.instance_config_result_matix[:, config['x']], self.dataset.max_cutoff)
-        self.logger.debug("Loss: {}".format(loss))
-        return loss, loss / self.dataset.time_scale_factor, test_loss / self.dataset.time_scale_factor
+        self.logger.debug("Loss: {}, test_loss: {}".format(loss, test_loss))
+        return loss, loss / self.dataset.time_scale_factor, test_loss
 
     def _calc_loss(self, results, cutoff_time):
         cutoff_i = np.where(results > cutoff_time)
@@ -143,10 +155,8 @@ class AlgorithmConfiguration(Problem):
         -------
             A number between 0 and 2**32-1
         """
-        if type(self.seed) is int:
-            val = self.seed + iteration
 
-        if type(self.seed) is str:
-            val = int.from_bytes(self.seed.encode(), byteorder='big') + iteration
-
-        return val % 2**32
+        random.seed(self.seed)
+        for _ in range(iteration):
+            val = random.getrandbits(32)
+        return val
