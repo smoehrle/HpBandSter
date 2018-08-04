@@ -24,7 +24,7 @@ class AlgorithmConfiguration(Problem):
     """
     """
     def __init__(self, tarfile, dataset_name, seed):
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
 
         if dataset_name not in datasets:
             raise Exception("Dataset {} not found.".format(dataset_name))
@@ -98,19 +98,22 @@ class AlgorithmConfiguration(Problem):
         cutoff_time = fidelities['cutoff']
         self.logger.debug("Cutoff time: {}".format(cutoff_time))
 
-        results = self.instance_config_result_matix[i, config['x']]
+        loss = self._calc_loss(self.instance_config_result_matix[i, config['x']], cutoff_time)
+        test_loss = self._calc_loss(self.instance_config_result_matix[:, config['x']], self.dataset.max_cutoff)
+        self.logger.debug("Loss: {}".format(loss))
+        return loss, loss / self.dataset.time_scale_factor, test_loss / self.dataset.time_scale_factor
+
+    def _calc_loss(self, results, cutoff_time):
         cutoff_i = np.where(results > cutoff_time)
         results[cutoff_i] = cutoff_time
 
-        loss = results.sum()
-        self.logger.debug("Loss: {}".format(loss))
-        return loss, loss / self.dataset.time_scale_factor
+        return results.sum()
 
     def build_fidelity_space(self) -> CS.ConfigurationSpace:
         cs = CS.ConfigurationSpace()
         cs.add_hyperparameters([
             CS.UniformIntegerHyperparameter('n_instances', lower=0, upper=self.num_instances),
-            CS.UniformFloatHyperparameter('cutoff', lower=self.min_cutoff, upper=self.max_cutoff),
+            CS.UniformFloatHyperparameter('cutoff', lower=self.min_cutoff, upper=self.dataset.max_cutoff),
         ])
         return cs
 
