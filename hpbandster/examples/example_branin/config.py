@@ -156,7 +156,7 @@ def _merge_dicts(base: Dict, ext: Dict, overwrite: bool) -> Dict:
 
 def load(file_path: str, run_id: str) -> ExperimentConfig:
     """
-    Load a config by the given filepath. Working_dir is autmatically set
+    Load a config by the given filepath. Working_dir is automatically set
     to the config location.
 
     Parameters
@@ -168,14 +168,7 @@ def load(file_path: str, run_id: str) -> ExperimentConfig:
     -------
     A complete ExperimentConfig
     """
-    with open(file_path, 'r') as f:
-        dict_ = yaml.load(f)
-    if 'extend' in dict_:
-        base_file_path = os.path.join(os.path.dirname(file_path), dict_['extend'])
-        del dict_['extend']
-        with open(base_file_path, 'r') as f:
-            base_ = yaml.load(f)
-        dict_ = _merge_dicts(base_, dict_, overwrite=True)
+    dict_ = load_yaml(file_path)
     dict_['working_dir'] = os.path.dirname(file_path)
 
     problems = load_problems(dict_['problems'], run_id)
@@ -196,6 +189,17 @@ def load(file_path: str, run_id: str) -> ExperimentConfig:
             raise NotImplementedError('The run type "{}" is not implemented'.format(name))
     dict_['runs'] = tuple(runs)
     return ExperimentConfig(**dict_)
+
+
+def load_yaml(file_path):
+    with open(file_path, 'r') as f:
+        dict_ = yaml.load(f)
+    if 'extend' in dict_:
+        base_file_path = os.path.join(os.path.dirname(file_path), dict_['extend'])
+        del dict_['extend']
+        base_ = load_yaml(base_file_path)
+        dict_ = _merge_dicts(base_, dict_, overwrite=True)
+    return dict_
 
 
 def load_problems(problems: dict, run_id: str) -> dict:

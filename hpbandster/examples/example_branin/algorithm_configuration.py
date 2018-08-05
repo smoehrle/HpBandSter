@@ -157,6 +157,6 @@ class AlgorithmConfiguration(Problem):
         """
 
         random.seed(self.seed)
-        for _ in range(iteration):
+        for _ in range(iteration + 1):
             val = random.getrandbits(32)
         return val
