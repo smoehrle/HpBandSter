@@ -39,11 +39,7 @@ def start_worker(
         host: Optional[str] = None,
         background: bool = False) -> None:
 
-    w = SimM2FWorker(
-        run.problem,
-        run.strategy,
-        cfg.max_budget,
-        run_id=run_id, host=host)
+    w = SimM2FWorker(run, cfg.max_budget, run_id=run_id, host=host)
 
     assert cfg.working_dir is not None, "Need working_dir to load nameserver credentials."
     w.load_nameserver_credentials(cfg.working_dir)

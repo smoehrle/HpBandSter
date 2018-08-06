@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, Tuple
 
 import numpy as np
 import ConfigSpace as CS
@@ -16,7 +16,8 @@ class Problem:
     def __repr__(self):
         raise NotImplementedError('__repr__ of Problem')
 
-    def cost(self, fidelity_config: Optional[CS.Configuration] = None,
+    def cost(self, config: CS.Configuration,
+             fidelity_config: Optional[CS.Configuration] = None,
              fidelity_values: Optional[Dict] = None,
              fidelity_vector: Optional[np.ndarray] = None) -> float:
         if fidelity_config is not None:
@@ -29,9 +30,10 @@ class Problem:
         else:
             fidelity_config = self.fidelity_config(fidelity_vector=fidelity_vector,
                                                    fidelity_values=fidelity_values)
-        return self._cost(fidelity_config)
+        return self._cost(config, fidelity_config)
 
-    def _cost(self, fidelity_config: CS.Configuration) -> float:
+    def _cost(self, config: CS.Configuration,
+              fidelity_config: CS.Configuration) -> float:
         raise NotImplementedError()
 
     def fidelity_config(self,
@@ -43,7 +45,8 @@ class Problem:
                                       values=fidelity_values)
         return fid_config
 
-    def calc_loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
+    def loss(self, config: CS.Configuration, fidelities: CS.Configuration)\
+        -> Tuple[float, Dict[str, str]]:
         """
         Calculate the loss for given configuration and fidelities
 

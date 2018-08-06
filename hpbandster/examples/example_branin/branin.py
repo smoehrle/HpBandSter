@@ -82,7 +82,7 @@ class Branin(Problem):
     def __repr__(self):
         return "Branin Problem"
 
-    def calc_loss(self, config: CS.ConfigurationSpace, fidelities: CS.Configuration):
+    def loss(self, config: CS.ConfigurationSpace, fidelities: CS.Configuration):
         """
         Calculate the loss for given configuration and fidelities
 
@@ -99,7 +99,7 @@ class Branin(Problem):
         """
         y = self.calc_noisy(config['x1'], config['x2'],
                             fidelities['z1'], fidelities['z2'], fidelities['z3'])
-        return np.abs(self.min - y)
+        return np.abs(self.min - y), {}
 
     @staticmethod
     def build_fidelity_space() -> CS.ConfigurationSpace:
@@ -123,7 +123,7 @@ class Branin(Problem):
         config_space.add_hyperparameter(CS.UniformFloatHyperparameter('x2', lower=0, upper=15))
         return config_space
 
-    def _cost(self, fidelities: CS.Configuration) -> float:
+    def _cost(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
         """
         Cost function which calculates the cost for given fidelity parameters.
         This cost function is based on the BOCA paper

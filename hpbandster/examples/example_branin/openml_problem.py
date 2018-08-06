@@ -28,10 +28,10 @@ class OpenMLRF(Problem):
     def __repr__(self):
         return 'Problem RandomForrest on task {}'.format(self.task.task_id)
 
-    def _cost(self, fidelities: CS.Configuration)-> float:
+    def _cost(self, config: CS.Configuration, fidelities: CS.Configuration)-> float:
         return fidelities['n_estimators'] * fidelities['max_depth']
 
-    def calc_loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
+    def loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
         model = sklearn.ensemble.RandomForestClassifier(n_estimators=fidelities['n_estimators'],
                                                         max_depth=fidelities['max_depth'],
                                                         criterion=config['criterion'],
@@ -72,10 +72,11 @@ class OpenMLGB(Problem):
     def __repr__(self):
         return 'Problem Gradient Boosted Trees on task {}'.format(self.task.task_id)
 
-    def _cost(self, fidelities: CS.Configuration, *args: float, **kwargs) -> float:
+    def _cost(self, config: CS.Configuration, fidelities: CS.Configuration,
+              *args: float, **kwargs) -> float:
         return fidelities['n_estimators'] * fidelities['subsample'] * fidelities['max_depth']
 
-    def calc_loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
+    def loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
         model = sklearn.ensemble.GradientBoostingClassifier(n_estimators=fidelities['n_estimators'],
                                                             max_depth=fidelities['max_depth'],
                                                             subsample=fidelities['subsample'],
