@@ -10,6 +10,8 @@ class Problem:
     """
     Abstract class defining a problem for the SimM2FWorker
     """
+    _run = None
+
     def __init__(self):
         pass
 
@@ -69,7 +71,7 @@ class Problem:
         return self._run
 
     @run.setter
-    def run(self, value) -> Run:
+    def run(self, value: Run):
         self._run = value
 
     @staticmethod

@@ -59,10 +59,18 @@ def load_runs(
         problem_label = kwargs['problem']
         strategy_label = kwargs['strategy']
         run_label = '{}-{}-{}'.format(opt_label, problem_label, strategy_label).lower()
-        run = Run(optimizer_class=opt_cls,
-                  problem=problems[problem_label],
-                  strategy=strategies[strategy_label],
-                  label=run_label)
+
+        ctor, kwargs = problems[problem_label]
+        problem = ctor(**kwargs)
+
+        ctor, kwargs = strategies[strategy_label]
+        strategy = ctor(**kwargs)
+
+        run = Run(
+            optimizer_class=opt_cls,
+            problem=problem,
+            strategy=strategy,
+            label=run_label)
 
         result.append(run)
     return result
@@ -71,16 +79,16 @@ def load_runs(
 def load_problems(problems: Dict[str, Dict[str, str]]) -> dict:
     result = {}
     for label, kwargs in problems.items():
-        cls = _load_class(kwargs.pop('class'), kwargs.pop('module'))
-        result[label] = cls(**kwargs)
+        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module'))
+        result[label] = cls_, kwargs
     return result
 
 
 def load_strategies(strategies: Dict[str, Dict[str, str]]) -> dict:
     result = {}
     for label, kwargs in strategies.items():
-        cls = _load_class(kwargs.pop('class'), kwargs.pop('module', strat))
-        result[label] = cls(**kwargs)
+        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module', strat))
+        result[label] = cls_, kwargs
     return result
 
 
@@ -92,9 +100,9 @@ def _load_class(class_name: str, module: Union[str, types.ModuleType]) -> T:
         module = __import__(module)
 
     class_members = inspect.getmembers(module, inspect.isclass)
-    for name, cls in class_members:
+    for name, cls_ in class_members:
         if class_name == name:
-            return cls
+            return cls_
 
     err_msg = ('Tried loading class {} of module {}, but failed finding.'
                .format(class_name, repr(module)))
@@ -111,7 +119,7 @@ def _merge_dicts(base: Dict, ext: Dict, overwrite: bool) -> Dict:
         if k in base:
             base_v = base[k]
             if isinstance(base_v, Mapping) and isinstance(ext_v, Mapping):
-                ext_v = _merge_dicts(base_v, ext_v)
+                ext_v = _merge_dicts(base_v, ext_v, overwrite)
             elif not overwrite:
                 raise ValueError('Found key {} in base and extension dict, '
                                  'expected values to be dicts to merge, '
