@@ -2,69 +2,49 @@ num_hb_runs: 15
 num_runs: 64
 
 problems:
-  - name: 'OpenmlGB'
-    label: 'p0'
-    task_id: 9952  # phoneme
+  p0:
+    class: 'OpenmlGB'
+    task_id: 3913
+  p1:
+    class: 'OpenmlRF'
+    task_id: 3913
 
 strategies:
-  - name: 'full'
-    label: 's0'
+  full:
+    class: 'full'
     num_fidelities: 3
-  - name: 'proptobudget'
-    label: 's1'
-    use_fidelity: [True, False, False]
-  - name: 'proptobudget'
-    label: 's2'
-    use_fidelity: [False, True, False]
-  - name: 'proptobudget'
-    label: 's3'
-    use_fidelity: [False, False, True]
-  - name: 'proptobudget'
-    label: 's4'
+  pb:
+    class: 'proptobudget'
     use_fidelity: [True, True, True]
-  - name: 'proptocost'
-    label: 's5'
-    problem: 'p0'
-    use_fidelity: [True, False, False]
-  - name: 'proptocost'
-    label: 's6'
-    problem: 'p0'
-    use_fidelity: [False, True, False]
-  - name: 'proptocost'
-    label: 's7'
-    problem: 'p0'
-    use_fidelity: [False, False, True]
-  - name: 'proptocost'
-    label: 's8'
-    problem: 'p0'
+  pc:
+    class: 'proptocost'
     use_fidelity: [True, True, True]
 
 runs:
-  - name: 'RandomSearch'
-    displayname: 'rf'
+  - optimizer: 'RandomSearch'
     problem: 'p0'
-    strategy: 's0'
-  - name: 'HyperBand'
+    strategy: 'rs'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's1'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's2'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's3'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's4'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's5'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's6'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's7'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's8'

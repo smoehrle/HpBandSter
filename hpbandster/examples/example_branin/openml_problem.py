@@ -47,7 +47,7 @@ class OpenMLRF(Problem):
         return model.oob_score_, {}
 
     @staticmethod
-    def build_fidelity_space() -> CS.ConfigurationSpace:
+    def build_fidelity_space(config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
             CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=2000),
@@ -94,13 +94,14 @@ class OpenMLGB(Problem):
         return 1. - acc, {}
 
     @staticmethod
-    def build_fidelity_space() -> CS.ConfigurationSpace:
+    def build_fidelity_space(config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
             CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=200),
             CS.UniformFloatHyperparameter('subsample', lower=0.1, upper=1.),
             CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=10),
         ])
+        return config_space
 
     @staticmethod
     def build_config_space() -> CS.ConfigurationSpace:

@@ -60,7 +60,7 @@ class SimM2FWorker(Worker):
 
         norm_budget = util.normalize_budget(budget, self.max_budget)
         z, strat_info = self.run_config.strategy.calc_fidelities(norm_budget, config, config_id)
-        fid_config = self.run_config.problem.fidelity_config(fidelity_vector=z)
+        fid_config = self.run_config.problem.fidelity_config(config, config_id, fidelity_vector=z)
         cost = self.run_config.problem.cost(config, config_id, fidelity_config=fid_config)
         loss, prob_info = self.run_config.problem.loss(config, config_id, fid_config)
 
