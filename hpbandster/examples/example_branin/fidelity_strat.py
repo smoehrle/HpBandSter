@@ -53,7 +53,7 @@ class FullFidelity(FidelityStrat):
     """
     This is a trivial strategie which always returns 1 as fidelity
     """
-    def __init__(self, num_fidelities: int):
+    def __init__(self):
         """
         Parameters
         ----------
@@ -61,12 +61,13 @@ class FullFidelity(FidelityStrat):
             Number of fidelities
         """
         super().__init__('full_fidelity')
-        self.num_fidelities = num_fidelities
 
     def calc_fidelities(self, norm_budget: float,
                         config: CS.Configuration, config_id: Tuple[int, int, int])\
                         -> Tuple[np.ndarray, Dict[str, str]]:
-        return np.array(self.num_fidelities * [1.]), {}
+        num_fidelities = len(self.run.problem.fidelity_space(config, config_id)
+                             .get_hyperparameter_names())
+        return np.array(num_fidelities * [1.]), {}
 
 
 class FidelityPropToBudget(FidelityStrat):
@@ -117,9 +118,8 @@ class FidelityPropToCost(FidelityStrat):
     def _num_fidelities(self) -> int:
         return len(self.use_fidelity)
 
-    @property
-    def max_cost(self, config):
-        return self.run.problem.cost(config=config,
+    def max_cost(self, config, config_id):
+        return self.run.problem.cost(config, config_id,
                                      fidelity_vector=np.ones(self._num_fidelities))
 
     def calc_fidelities(self, norm_budget: float,
@@ -128,8 +128,8 @@ class FidelityPropToCost(FidelityStrat):
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            cost = self.run.problem.cost(config, fidelity_vector=Z)
-            return (b - cost / self.max_cost)**2
+            cost = self.run.problem.cost(config, config_id, fidelity_vector=Z)
+            return (b - cost / self.max_cost(config, config_id))**2
 
         def fidelity_objective(z: np.ndarray):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
