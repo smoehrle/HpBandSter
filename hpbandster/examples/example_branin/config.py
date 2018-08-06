@@ -10,7 +10,7 @@ import hpbandster.optimizers
 
 from problem import Problem
 import fidelity_strat as strat
-from models import Run, Experiment
+from models import Run, Experiment, Plot
 
 
 def load(file_path: str, run_id: str) -> Experiment:
@@ -32,7 +32,8 @@ def load(file_path: str, run_id: str) -> Experiment:
     problems = load_problems(dict_.pop('problems'))
     strategies = load_strategies(dict_.pop('strategies'))
     runs = load_runs(dict_.pop('runs'), strategies, problems)
-    return Experiment(runs=runs, run_id=run_id, **dict_)
+    plot = Plot(**dict_.pop('plot'))
+    return Experiment(runs=runs, run_id=run_id, plot=plot, **dict_)
 
 
 def load_yaml(file_path):

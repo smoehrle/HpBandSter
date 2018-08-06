@@ -1,37 +1,45 @@
 num_hb_runs: 15
 num_runs: 256
+extend: '../shared.yml'
 
 problems:
-  - name: 'ac'
-    label: 'p0'
+  p0:
+    class: 'AlgorithmConfiguration'
+    module: 'algorithm_configuration'
     tarfile: '/home/moehrles/data.tar.gz'
     dataset_name: 'SPEAR_QCP'
 
 strategies:
-  - name: 'full'
-    label: 's0'
+  s0:
+    class: 'FullFidelity'
     num_fidelities: 2
-  - name: 'proptobudget'
-    label: 's1'
+  s1:
+    class: 'FidelityPropToBudget'
     use_fidelity: [True, False]
-  - name: 'proptobudget'
-    label: 's2'
+  s2:
+    class: 'FidelityPropToBudget'
     use_fidelity: [False, True]
-  - name: 'proptobudget'
-    label: 's3'
+  s3:
+    class: 'FidelityPropToBudget'
     use_fidelity: [True, True]
 
 
 runs:
-  - name: 'RandomSearch'
+  - optimizer: 'RandomSearch'
     problem: 'p0'
     strategy: 's0'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's1'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's2'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 's3'
+
+plot:
+  title: 'AC - SPEAR_QCP'
+  time_column: 'cummulative_cost'
+  value_column: 'test_losses'
+  bigger_is_better: True
