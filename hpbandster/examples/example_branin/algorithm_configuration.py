@@ -1,8 +1,9 @@
 import logging
 import random
+import time
 import tarfile as tar
 from collections import namedtuple
-from typing import Dict
+from typing import Dict, Tuple
 
 import ConfigSpace as CS
 import numpy as np
@@ -25,7 +26,7 @@ datasets = {
 class AlgorithmConfiguration(Problem):
     """
     """
-    def __init__(self, tarfile, dataset_name, seed):
+    def __init__(self, tarfile, dataset_name):
         self.logger = logging.getLogger(__name__)
 
         if dataset_name not in datasets:
@@ -34,17 +35,11 @@ class AlgorithmConfiguration(Problem):
         self.dataset_name = dataset_name
         self.dataset = datasets[dataset_name]
 
-        if type(seed) is int:
-            self.seed = seed
-
-        if type(seed) is str:
-            self.seed = int.from_bytes(seed.encode(), byteorder='big')
-
-        if not self.seed:
-            raise Exception("Currently only 'str' and 'int' seeds are supported.")
+        seed = str(time.time())
+        self.seed = int.from_bytes(seed.encode(), byteorder='big')
 
         self.logger.debug("___AC_INIT___")
-        self.logger.debug("Seed: {}".format(seed))
+        self.logger.debug("Seed: {}".format(self.seed))
 
         with tar.open(tarfile, 'r:gz') as archive:
             with archive.extractfile(self.dataset.filename) as f:

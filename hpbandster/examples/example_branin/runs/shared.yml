@@ -26,3 +26,9 @@ strategies:
   s8:
     class: 'FidelityPropToCost'
     use_fidelity: [True, True, True]
+
+plot:
+  title: 'DefaultTitle - Please overwrite'
+  time_column: 'cummulative_cost'
+  value_column: 'losses'
+  bigger_is_better: False

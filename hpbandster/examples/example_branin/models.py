@@ -6,15 +6,15 @@ from hpbandster.core.master import Master
 
 
 class Experiment(namedtuple('ExperimentBase',
-        ['num_hb_runs', 'num_runs', 'runs', 'working_dir', 'run_id', 'min_budget', 'max_budget', 'offset'])):
+        ['num_hb_runs', 'num_runs', 'runs', 'working_dir', 'run_id', 'plot', 'min_budget', 'max_budget', 'offset'])):
     __slots__ = ()
 
     def __init__(self, *args, runs: List['Run'], **kwargs):
         for r in runs:
             r.experiment = self
 
-    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, min_budget=9, max_budget=243, offset=0):
-        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, min_budget, max_budget, offset)
+    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, plot, min_budget=9, max_budget=243, offset=0):
+        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, plot, min_budget, max_budget, offset)
     """
     Contains all configuration parameters which are not
     specific for a single run.
@@ -73,3 +73,6 @@ class Run():
 
         self.problem.run = self
         self.strategy.run = self
+
+
+Plot = namedtuple('Plot', ['title', 'time_column', 'value_column', 'bigger_is_better'])
