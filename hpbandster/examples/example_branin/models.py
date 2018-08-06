@@ -58,8 +58,6 @@ class Experiment(namedtuple('ExperimentBase',
 
 
 class Run():
-    experiment: Experiment = None
-
     def __init__(self,
                  label: str,
                  optimizer_class: Type[Master],
@@ -73,6 +71,7 @@ class Run():
 
         self.problem.run = self
         self.strategy.run = self
+        self.experiment = None
 
 
 Plot = namedtuple('Plot', ['title', 'time_column', 'value_column', 'bigger_is_better'])

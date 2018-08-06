@@ -15,11 +15,10 @@ class FidelityStrat:
     The only things a valid strategie class needs is a name and the
     calc_fidelities function below
     """
-    info = dict()
-    _run = None
-
     def __init__(self, name):
         self.name = name
+        self.info = dict()
+        self._run = None
 
     def calc_fidelities(self, norm_budget: float,
                         config: CS.Configuration, config_id: Tuple[int, int, int])\
