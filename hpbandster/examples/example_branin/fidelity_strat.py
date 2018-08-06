@@ -5,6 +5,7 @@ import numpy as np
 import scipy.optimize
 import ConfigSpace as CS
 
+from models import Run
 from problem import Problem
 
 
@@ -14,6 +15,9 @@ class FidelityStrat:
     The only things a valid strategie class needs is a name and the
     calc_fidelities function below
     """
+    info = dict()
+    _run = None
+
     def __init__(self, name):
         self.name = name
 
@@ -35,6 +39,14 @@ class FidelityStrat:
             The fidelity parameters
         """
         pass
+
+    @property
+    def run(self) -> Run:
+        return self._run
+
+    @run.setter
+    def run(self, value: Run):
+        self._run = value
 
 
 class FullFidelity(FidelityStrat):
