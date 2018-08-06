@@ -1,5 +1,6 @@
 num_hb_runs: 15
 num_runs: 128
+extend: '../shared.yml'
 
 problems:
   gb:
@@ -46,3 +47,9 @@ runs:
   - optimizer: 'HyperBand'
     problem: 'gb'
     strategy: 'pball'
+
+plot:
+  title: 'OpenML Phoneme Dataset GadientBoostedTrees'
+  time_column: 'times_finished'
+  value_column: 'losses'
+  bigger_is_better: True
