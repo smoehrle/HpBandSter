@@ -16,7 +16,7 @@ class Problem:
     def __repr__(self):
         raise NotImplementedError('__repr__ of Problem')
 
-    def cost(self, config: CS.Configuration,
+    def cost(self, config: CS.Configuration, config_id: Tuple[int, int, int],
              fidelity_config: Optional[CS.Configuration] = None,
              fidelity_values: Optional[Dict] = None,
              fidelity_vector: Optional[np.ndarray] = None) -> float:
@@ -30,9 +30,9 @@ class Problem:
         else:
             fidelity_config = self.fidelity_config(fidelity_vector=fidelity_vector,
                                                    fidelity_values=fidelity_values)
-        return self._cost(config, fidelity_config)
+        return self._cost(config, config_id, fidelity_config)
 
-    def _cost(self, config: CS.Configuration,
+    def _cost(self, config: CS.Configuration, config_id: Tuple[int, int, int],
               fidelity_config: CS.Configuration) -> float:
         raise NotImplementedError()
 
@@ -45,7 +45,8 @@ class Problem:
                                       values=fidelity_values)
         return fid_config
 
-    def loss(self, config: CS.Configuration, fidelities: CS.Configuration)\
+    def loss(self, config: CS.Configuration, config_id: Tuple[int, int, int],
+             fidelities: CS.Configuration)\
         -> Tuple[float, Dict[str, str]]:
         """
         Calculate the loss for given configuration and fidelities

@@ -69,7 +69,8 @@ class AlgorithmConfiguration(Problem):
     def _cost(self, *args: float, **kwargs) -> float:
         return None
 
-    def loss(self, config: CS.Configuration, fidelities: CS.Configuration) -> (float, Dict):
+    def loss(self, config: CS.Configuration, config_id: Tuple[int, int, int],
+             fidelities: CS.Configuration) -> (float, Dict):
         """
         Calculate the loss for given configuration and fidelities
 
@@ -89,15 +90,15 @@ class AlgorithmConfiguration(Problem):
             (loss, cost)
             Since the cost is dependent on the configuration, it cannot be calculated independently 
         """
-        self.logger.debug("___CALC_LOSS___{}".format(self.run.config_id))
+        self.logger.debug("___CALC_LOSS___{}".format(config_id))
         self.logger.debug("Config: {}, Fidelity: {}, {}".format(config['x'], fidelities['n_instances'], fidelities['cutoff']))
         if fidelities['n_instances'] < self.num_instances:
             # Seed random generator with iteration id. This ensures that the same instances
             # are compared in the same iteration
             # Problem: since the seed is not run but only iteration dependend the same
             # problem instances are evaluated across different runs 
-            seed = self.generate_seed(self.run.config_id[0])
-            print("ConfigId: {}, Seed: {}".format(self.run.config_id[0], seed))
+            seed = self.generate_seed(config_id[0])
+            print("ConfigId: {}, Seed: {}".format(config_id[0], seed))
             np.random.seed(seed)
             i = sorted(np.random.choice(self.num_instances,
                                         fidelities['n_instances'],

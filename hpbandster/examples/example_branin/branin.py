@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+from typing import Dict, Tuple
 
 from problem import Problem
 import ConfigSpace as CS
@@ -82,7 +83,8 @@ class Branin(Problem):
     def __repr__(self):
         return "Branin Problem"
 
-    def loss(self, config: CS.ConfigurationSpace, fidelities: CS.Configuration):
+    def loss(self, config: CS.ConfigurationSpace, config_id: Tuple[int, int, int],
+             fidelities: CS.Configuration) -> Tuple[float, Dict[str, str]]:
         """
         Calculate the loss for given configuration and fidelities
 
@@ -123,7 +125,8 @@ class Branin(Problem):
         config_space.add_hyperparameter(CS.UniformFloatHyperparameter('x2', lower=0, upper=15))
         return config_space
 
-    def _cost(self, config: CS.Configuration, fidelities: CS.Configuration) -> float:
+    def _cost(self, config: CS.Configuration, config_id: Tuple[int, int, int],
+              fidelities: CS.Configuration) -> float:
         """
         Cost function which calculates the cost for given fidelity parameters.
         This cost function is based on the BOCA paper

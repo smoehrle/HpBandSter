@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional, Tuple, Dict
 import logging
 
 import numpy as np
@@ -16,9 +16,10 @@ class FidelityStrat:
     """
     def __init__(self, name):
         self.name = name
-        self.info = dict()
 
-    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
+    def calc_fidelities(self, norm_budget: float,
+                        config: CS.Configuration, config_id: Tuple[int, int, int])\
+                        -> Tuple[np.ndarray, Dict[str, str]]:
         """
         This function is the core of the strategie. It receives a given
         budget and should return an ndarray containing the fidelity
@@ -50,8 +51,10 @@ class FullFidelity(FidelityStrat):
         super().__init__('full_fidelity')
         self.num_fidelities = num_fidelities
 
-    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
-        return np.array(self.num_fidelities * [1.])
+    def calc_fidelities(self, norm_budget: float,
+                        config: CS.Configuration, config_id: Tuple[int, int, int])\
+                        -> Tuple[np.ndarray, Dict[str, str]]:
+        return np.array(self.num_fidelities * [1.]), {}
 
 
 class FidelityPropToBudget(FidelityStrat):
@@ -71,10 +74,12 @@ class FidelityPropToBudget(FidelityStrat):
         super().__init__('propto_budget_{}'.format('_'.join(fidelities)))
         self.use_fidelity = np.array(use_fidelity)
 
-    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
+    def calc_fidelities(self, norm_budget: float,
+                        config: CS.Configuration, config_id: Tuple[int, int, int])\
+                        -> Tuple[np.ndarray, Dict[str, str]]:
         z = np.array(len(self.use_fidelity) * [1.])
         z[self.use_fidelity] = norm_budget
-        return z
+        return z, {}
 
 
 class FidelityPropToCost(FidelityStrat):
@@ -101,15 +106,17 @@ class FidelityPropToCost(FidelityStrat):
         return len(self.use_fidelity)
 
     @property
-    def max_cost(self):
-        return self.run.problem.cost(config=self.run.config,
+    def max_cost(self, config):
+        return self.run.problem.cost(config=config,
                                      fidelity_vector=np.ones(self._num_fidelities))
 
-    def calc_fidelities(self, norm_budget: float) -> np.ndarray:
+    def calc_fidelities(self, norm_budget: float,
+                        config: CS.Configuration, config_id: Tuple[int, int, int])\
+                        -> Tuple[np.ndarray, Dict[str, str]]:
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            cost = self.run.problem.cost(self.run.config, fidelity_vector=Z)
+            cost = self.run.problem.cost(config, fidelity_vector=Z)
             return (b - cost / self.max_cost)**2
 
         def fidelity_objective(z: np.ndarray):
@@ -131,7 +138,6 @@ class FidelityPropToCost(FidelityStrat):
                 constraints=constraint, options=options)
 
         z = np.ones_like(self.use_fidelity, dtype=np.float)
-        self.info['minimize_success'] = bool(result['success'])
         if result['success']:
             z[self.use_fidelity] = result['x']
         else:
@@ -139,7 +145,8 @@ class FidelityPropToCost(FidelityStrat):
             self.logger.warning("{}, norm budget {:.2f} ".format(self.name, norm_budget))
             self.logger.warning(result)
             z[self.use_fidelity] = init_z
-        return z
+        info = dict(minimize_success=bool(result['success']))
+        return z, info
 
     @staticmethod
     def _log3(x):

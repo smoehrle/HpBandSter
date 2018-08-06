@@ -40,7 +40,7 @@ class SimM2FWorker(Worker):
         self.max_budget = max_budget
 
     def compute(self, config: CS.ConfigurationSpace, budget: float,
-                config_id: Tuple[float, float, float], *args, **kwargs) -> dict:
+                config_id: Tuple[int, int, int], *args, **kwargs) -> dict:
         """
         Simple compute function which evaluates problem and strategy functions for
         given parameters and budget
@@ -56,15 +56,13 @@ class SimM2FWorker(Worker):
         -------
         dict with the 'loss' and another 'info'-dict.
         """
-        self.run_config.config_id = config_id
-        self.run_config.config = config
         time.sleep(0.01)
 
         norm_budget = util.normalize_budget(budget, self.max_budget)
-        z = self.run_config.strategy.calc_fidelities(norm_budget)
+        z, strat_info = self.run_config.strategy.calc_fidelities(norm_budget, config, config_id)
         fid_config = self.run_config.problem.fidelity_config(fidelity_vector=z)
-        cost = self.run_config.problem.cost(config, fidelity_config=fid_config)
-        loss, info = self.run_config.problem.loss(config, fid_config)
+        cost = self.run_config.problem.cost(config, config_id, fidelity_config=fid_config)
+        loss, prob_info = self.run_config.problem.loss(config, config_id, fid_config)
 
         return({
             'loss': loss,  # this is the a mandatory field to run hyperband
@@ -73,8 +71,8 @@ class SimM2FWorker(Worker):
                 'fidelity_vector': np.array2string(z),
                 'fidelity_config': repr(fid_config),
                 'fidelity_strategy': repr(self.run_config.strategy),
-                'strategy_info': self.run_config.strategy.info,
                 'problem': repr(self.run_config.problem),
-                **info
+                **strat_info,
+                **prob_info
             }
         })
