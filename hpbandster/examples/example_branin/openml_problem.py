@@ -42,7 +42,7 @@ class OpenMLRF(Problem):
                                                         oob_score=True)
         X, y = self.data
         model.fit(X, y)
-        return model.oob_score_
+        return model.oob_score_, {}
 
     @staticmethod
     def build_fidelity_space() -> CS.ConfigurationSpace:
@@ -88,7 +88,7 @@ class OpenMLGB(Problem):
             sklearn.model_selection.train_test_split(X, y, test_size=0.3)
         model.fit(X_train, y_train)
         acc = model.score(X_test, y_test)
-        return 1. - acc
+        return 1. - acc, {}
 
     @staticmethod
     def build_fidelity_space() -> CS.ConfigurationSpace:
