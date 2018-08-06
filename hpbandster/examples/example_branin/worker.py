@@ -69,6 +69,7 @@ class SimM2FWorker(Worker):
             loss, cost, test_loss = self.problem.calc_loss(config, fid_config, kwargs['config_id'])
         else:
             loss = self.problem.calc_loss(config, fid_config)
+            test_loss = None
 
         return({
             'loss': loss,  # this is the a mandatory field to run hyperband

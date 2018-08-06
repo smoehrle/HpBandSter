@@ -6,6 +6,7 @@ import sklearn.ensemble
 import sklearn.model_selection
 
 from problem import Problem
+from config import Run
 
 
 warnings.filterwarnings("ignore", ".*n_jobs=1.*")

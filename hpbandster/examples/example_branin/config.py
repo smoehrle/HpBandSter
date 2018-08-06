@@ -1,141 +1,108 @@
 import os
-from typing import Dict
-from collections import namedtuple, Mapping
+import inspect
+import types
+from typing import Dict, Union, TypeVar, List
+import difflib
+from collections import Mapping
 
 import yaml
-import numpy as np
-from hpbandster.optimizers import HyperBand, RandomSearch
+import hpbandster.optimizers
 
-import algorithm_configuration
-import branin
-import openml_problem
 from problem import Problem
 import fidelity_strat as strat
+from models import Run, Experiment
 
 
-class ExperimentConfig(namedtuple('ExperimentConfig1',
-        [ 'num_hb_runs', 'num_runs', 'runs', 'working_dir', 'min_budget', 'max_budget', 'offset'])):
-    __slots__ = ()
-    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, min_budget=9, max_budget=243, offset=0):
-        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, min_budget, max_budget, offset)
+def load(file_path: str, run_id: str) -> Experiment:
     """
-    Contains all configuration parameters which are not
-    specific for a single run.
+    Load a config by the given filepath. Working_dir is automatically set
+    to the config location.
 
-    Members
+    Parameters
+    ----------
+    file_path :
+        Path to a yaml config file
+
+    Returns
     -------
-    num_hb_runs :
-        The number of HyperBand runs for a single runs.
-        A single HyperBand run has num_bracket iterations
-    num_runs :
-        The number of repetitions / independent runs
-    runs :
-        Tuple of run configurations in the format (name, config)
-    working_dir :
-        Location where the result pickles are saved to
-    min_budget :
-        Minimum budget given to each configuration (default: 9)
-    max_budget :
-        Maximum budget given to each configuration (default: 243)
-    offset :
-        Offset for the result pickle name. If you already have 10
-        results set this value to 10. Then the next run will be #11
+    A complete ExperimentConfig
     """
-    # NamedTuple with type hints and default values are not supported by Python 3.5
-    # # Mandatory config values
-    # num_hb_runs: int
-    # num_runs: int
-    # runs: tuple
-
-    # # auto-generated:
-    # working_dir: str
-
-    # # Optional config values
-    # min_budget: int = 9
-    # max_budget: int = 243
-    # offset: int = 0
-
-    @property
-    def num_brackets(self) -> int:
-        return int(round((np.log(self.max_budget) - np.log(self.min_budget)) / np.log(3)))
+    dict_ = load_yaml(file_path)
+    dict_['working_dir'] = os.path.dirname(file_path)
+    problems = load_problems(dict_.pop('problems'))
+    strategies = load_strategies(dict_.pop('strategies'))
+    runs = load_runs(dict_.pop('runs'), strategies, problems)
+    return Experiment(runs=runs, run_id=run_id, **dict_)
 
 
-class RunConfig():
-    """
-    Abstract class specifying a run config
-    """
-    @property
-    def display_name(self) -> str:
-        raise NotImplementedError('RunConfig.display_name')
-
-    @property
-    def constructor(self):
-        raise NotImplementedError('RunConfig.constructor')
-
-    @property
-    def strategy(self):
-        raise NotImplementedError('RunConfig.strategy')
-
-    @property
-    def problem(self):
-        raise NotImplementedError('RunConfig.problem')
+def load_yaml(file_path):
+    with open(file_path, 'r') as f:
+        dict_ = yaml.load(f)
+    if 'extend' in dict_:
+        base_file_path = os.path.join(os.path.dirname(file_path), dict_['extend'])
+        del dict_['extend']
+        base_ = load_yaml(base_file_path)
+        dict_ = _merge_dicts(base_, dict_, overwrite=True)
+    return dict_
 
 
-class RandomSearchConfig(RunConfig):
-    """
-    Run config for a random search run
-    """
-    def __init__(self, problem, strategy, displayname):
-        self._problem = problem
-        self._strategy = strategy
-        self._displayname = displayname
+def load_runs(
+        runs: List[Dict[str, str]],
+        strategies: Dict[str, strat.FidelityStrat],
+        problems: Dict[str, Problem]) -> List[Run]:
+    result = []
+    for kwargs in runs:
+        opt_class_name = kwargs.pop('optimizer')
+        opt_cls = _load_class(opt_class_name,
+                              kwargs.pop('optimizer_module', hpbandster.optimizers))
+        opt_label = '.'.join([opt_cls.__module__, opt_cls.__name__])
+        problem_label = kwargs['problem']
+        strategy_label = kwargs['strategy']
+        run_label = '{}-{}-{}'.format(opt_label, problem_label, strategy_label).lower()
+        run = Run(optimizer_class=opt_cls,
+                  problem=problems[problem_label],
+                  strategy=strategies[strategy_label],
+                  label=run_label)
 
-    @property
-    def display_name(self) -> str:
-        if self._displayname is not None:
-            return self._displayname
-        return 'RandomSearch'
-
-    @property
-    def constructor(self):
-        return RandomSearch
-
-    @property
-    def strategy(self):
-        return self._strategy
-
-    @property
-    def problem(self):
-        return self._problem
+        result.append(run)
+    return result
 
 
-class HyperBandConfig(RunConfig):
-    """
-    Run config for a hyperband run
-    """
-    def __init__(self, problem, strategy, displayname):
-        self._problem = problem
-        self._strategy = strategy
-        self._displayname = displayname
-
-    @property
-    def display_name(self) -> str:
-        if self._displayname is not None:
-            return self._displayname
-        return '{}_{}'.format('hyperband', self.strategy.name)
-
-    @property
-    def constructor(self):
-        return HyperBand
+def load_problems(problems: Dict[str, Dict[str, str]]) -> dict:
+    result = {}
+    for label, kwargs in problems.items():
+        cls = _load_class(kwargs.pop('class'), kwargs.pop('module'))
+        result[label] = cls(**kwargs)
+    return result
 
 
-    @property
-    def strategy(self):
-        return self._strategy
+def load_strategies(strategies: Dict[str, Dict[str, str]]) -> dict:
+    result = {}
+    for label, kwargs in strategies.items():
+        cls = _load_class(kwargs.pop('class'), kwargs.pop('module', strat))
+        result[label] = cls(**kwargs)
+    return result
 
-    @property
-    def problem(self):
-        return self._problem
+
+T = TypeVar('T')
+
+
+def _load_class(class_name: str, module: Union[str, types.ModuleType]) -> T:
+    if isinstance(module, str):
+        module = __import__(module)
+
+    class_members = inspect.getmembers(module, inspect.isclass)
+    for name, cls in class_members:
+        if class_name == name:
+            return cls
+
+    err_msg = ('Tried loading class {} of module {}, but failed finding.'
+               .format(class_name, repr(module)))
+    similar_names = difflib.get_close_matches(
+        class_name, [n for n, c in class_members], n=1)
+    if len(similar_names) > 0:
+        err_msg += ' Did you mean class "{}"?'.format(similar_names[0])
+    raise ValueError(err_msg)
 
 
 def _merge_dicts(base: Dict, ext: Dict, overwrite: bool) -> Dict:
@@ -152,104 +119,3 @@ def _merge_dicts(base: Dict, ext: Dict, overwrite: bool) -> Dict:
                                  .format(k, repr(base_v), repr(ext_v)))
         merge[k] = ext_v
     return merge
-
-
-def load(file_path: str, run_id: str) -> ExperimentConfig:
-    """
-    Load a config by the given filepath. Working_dir is automatically set
-    to the config location.
-
-    Parameters
-    ----------
-    file_path :
-        Path to a yaml config file
-
-    Returns
-    -------
-    A complete ExperimentConfig
-    """
-    dict_ = load_yaml(file_path)
-    dict_['working_dir'] = os.path.dirname(file_path)
-
-    problems = load_problems(dict_['problems'], run_id)
-    del dict_['problems']
-    strategies = load_strategies(problems, dict_['strategies'])
-    del dict_['strategies']
-    runs = []
-    for run in dict_['runs']:
-        name = run['name']
-        p = problems[run['problem']]
-        s = strategies[run['strategy']]
-        displayname = run['displayname'] if 'displayname' in run else None
-        if name == 'RandomSearch':
-            runs.append(RandomSearchConfig(p, s, displayname))
-        elif name == 'HyperBand':
-            runs.append(HyperBandConfig(p, s, displayname))
-        else:
-            raise NotImplementedError('The run type "{}" is not implemented'.format(name))
-    dict_['runs'] = tuple(runs)
-    return ExperimentConfig(**dict_)
-
-
-def load_yaml(file_path):
-    with open(file_path, 'r') as f:
-        dict_ = yaml.load(f)
-    if 'extend' in dict_:
-        base_file_path = os.path.join(os.path.dirname(file_path), dict_['extend'])
-        del dict_['extend']
-        base_ = load_yaml(base_file_path)
-        dict_ = _merge_dicts(base_, dict_, overwrite=True)
-    return dict_
-
-
-def load_problems(problems: dict, run_id: str) -> dict:
-    if not problems:
-        raise LookupError('No problem instances defined!')
-
-    result = {}
-    for p in problems:
-        name = p['name'].lower()
-        del p['name']
-        label = p['label'].lower()
-        del p['label']
-
-        if name == 'branin':
-            obj = branin.Branin(**p)
-        elif name == 'openmlrf':
-            obj = openml_problem.OpenMLRF(**p)
-        elif name == 'openmlgb':
-            obj = openml_problem.OpenMLGB(**p)
-        elif name == 'ac':
-            p['seed'] = run_id
-            obj = algorithm_configuration.AlgorithmConfiguration(**p)
-        else:
-            raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
-
-        result[label] = obj
-    return result
-
-
-def load_strategies(problems: Dict[str, Problem], strategies: dict) -> dict:
-    if not strategies:
-        raise LookupError('No strategy instance defined!')
-
-    result = {}
-    for s in strategies:
-        name = s['name'].lower()
-        del s['name']
-        label = s['label'].lower()
-        del s['label']
-
-        if name == 'full':
-            obj = strat.FullFidelity(**s)
-        elif name == 'proptobudget':
-            obj = strat.FidelityPropToBudget(**s)
-        elif name == 'proptocost':
-            prob = problems[s['problem']]
-            del s['problem']
-            obj = strat.FidelityPropToCost(problem=prob, **s)
-        else:
-            raise NotImplementedError('The problem type "{}" is not implemented'.format(name))
-
-        result[label] = obj
-    return result
