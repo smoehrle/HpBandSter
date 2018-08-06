@@ -1,12 +1,12 @@
 import time
+from typing import Tuple
 import numpy as np
 import ConfigSpace as CS
 
 from hpbandster.core.worker import Worker
 
-import fidelity_strat
-import problem
 import util
+from models import Run
 
 
 class SimM2FWorker(Worker):
@@ -15,8 +15,7 @@ class SimM2FWorker(Worker):
     """
     def __init__(
             self,
-            problem: problem.Problem,
-            strategy: fidelity_strat.FidelityStrat,
+            run: Run,
             max_budget: float,
             *args, **kwargs):
         """
@@ -37,11 +36,11 @@ class SimM2FWorker(Worker):
         """
 
         super().__init__(*args, **kwargs)
-        self.problem = problem
-        self.strategy = strategy
+        self.run_config = run
         self.max_budget = max_budget
 
-    def compute(self, config: CS.ConfigurationSpace, budget: float, *args, **kwargs) -> dict:
+    def compute(self, config: CS.ConfigurationSpace, budget: float,
+                config_id: Tuple[float, float, float], *args, **kwargs) -> dict:
         """
         Simple compute function which evaluates problem and strategy functions for
         given parameters and budget
@@ -57,19 +56,15 @@ class SimM2FWorker(Worker):
         -------
         dict with the 'loss' and another 'info'-dict.
         """
+        self.run_config.config_id = config_id
+        self.run_config.config = config
         time.sleep(0.01)
 
         norm_budget = util.normalize_budget(budget, self.max_budget)
-        z = self.strategy.calc_fidelities(norm_budget)
-        # Temporary (discuss with David)
-        fid_config = self.problem.fidelity_config(fidelity_vector=z)
-        cost = self.problem.cost(fidelity_config=fid_config)
-        if cost is None:
-            # Propably better to change the return type into a dict or something..
-            loss, cost, test_loss = self.problem.calc_loss(config, fid_config, kwargs['config_id'])
-        else:
-            loss = self.problem.calc_loss(config, fid_config)
-            test_loss = None
+        z = self.run_config.strategy.calc_fidelities(norm_budget)
+        fid_config = self.run_config.problem.fidelity_config(fidelity_vector=z)
+        cost = self.run_config.problem.cost(config, fidelity_config=fid_config)
+        loss, info = self.run_config.problem.loss(config, fid_config)
 
         return({
             'loss': loss,  # this is the a mandatory field to run hyperband
@@ -77,9 +72,9 @@ class SimM2FWorker(Worker):
                 'cost': cost,
                 'fidelity_vector': np.array2string(z),
                 'fidelity_config': repr(fid_config),
-                'fidelity_strategy': repr(self.strategy),
-                'strategy_info': self.strategy.info,
-                'problem': repr(self.problem),
-                'test_loss': test_loss if test_loss else None,
+                'fidelity_strategy': repr(self.run_config.strategy),
+                'strategy_info': self.run_config.strategy.info,
+                'problem': repr(self.run_config.problem),
+                **info
             }
         })

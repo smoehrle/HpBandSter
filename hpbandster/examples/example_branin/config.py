@@ -55,7 +55,7 @@ def load_runs(
         opt_class_name = kwargs.pop('optimizer')
         opt_cls = _load_class(opt_class_name,
                               kwargs.pop('optimizer_module', hpbandster.optimizers))
-        opt_label = '.'.join([opt_cls.__module__, opt_cls.__name__])
+        opt_label = opt_cls.__name__
         problem_label = kwargs['problem']
         strategy_label = kwargs['strategy']
         run_label = '{}-{}-{}'.format(opt_label, problem_label, strategy_label).lower()

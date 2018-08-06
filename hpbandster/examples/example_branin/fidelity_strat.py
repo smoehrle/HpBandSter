@@ -102,13 +102,15 @@ class FidelityPropToCost(FidelityStrat):
 
     @property
     def max_cost(self):
-        return self.run.problem.cost(fidelity_vector=np.ones(self._num_fidelities))
+        return self.run.problem.cost(config=self.run.config,
+                                     fidelity_vector=np.ones(self._num_fidelities))
 
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            return (b - self.run.problem.cost(fidelity_vector=Z) / self.max_cost)**2
+            cost = self.run.problem.cost(self.run.config, fidelity_vector=Z)
+            return (b - cost / self.max_cost)**2
 
         def fidelity_objective(z: np.ndarray):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
