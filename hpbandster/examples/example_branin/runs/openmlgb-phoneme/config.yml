@@ -1,50 +1,48 @@
 num_hb_runs: 15
-num_runs: 64
+num_runs: 128
 
 problems:
-  p0:
-    class: 'OpenmlGB'
-    task_id: 3913
-  p1:
-    class: 'OpenmlRF'
-    task_id: 3913
+  gb:
+    class: 'OpenMLGB'
+    module: 'openml_problem'
+    task_id: 9952 # phoneme
+  rf:
+    class: 'OpenMLRF'
+    module: 'openml_problem'
+    task_id: 9952 # phoneme
 
 strategies:
   full:
-    class: 'full'
-    num_fidelities: 3
-  pb:
-    class: 'proptobudget'
+    class: 'FullFidelity'
+  pb1:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [True, False, False]
+  pb2:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [False, True, False]
+  pb3:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [False, False, True]
+  pball:
+    class: 'FidelityPropToBudget'
     use_fidelity: [True, True, True]
   pc:
-    class: 'proptocost'
+    class: 'FidelityPropToCost'
     use_fidelity: [True, True, True]
 
 runs:
   - optimizer: 'RandomSearch'
-    problem: 'p0'
-    strategy: 'rs'
+    problem: 'gb'
+    strategy: 'full'
   - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's1'
+    problem: 'gb'
+    strategy: 'pb1'
   - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's2'
+    problem: 'gb'
+    strategy: 'pb2'
   - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's3'
+    problem: 'gb'
+    strategy: 'pb3'
   - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's4'
-  - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's5'
-  - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's6'
-  - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's7'
-  - optimizer: 'HyperBand'
-    problem: 'p0'
-    strategy: 's8'
+    problem: 'gb'
+    strategy: 'pball'
