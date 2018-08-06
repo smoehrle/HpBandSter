@@ -8,6 +8,7 @@ import re
 import config
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class AggregatedResults():
@@ -15,7 +16,7 @@ class AggregatedResults():
         self.runs = dict()
         self.config = dict()
 
-    def add_run(self, config_id, filename):
+    def load_run(self, config_id, filename):
         if config_id not in self.runs:
             self.runs[config_id] = []
 
@@ -24,14 +25,27 @@ class AggregatedResults():
 
         self.runs[config_id].append(run)
 
+    def find_runs(self, filter_, directory):
+        config_id_regex = re.compile(r"results\.{}-([^-]+-)[0-9]+\.pkl".format(filter_))
+
+        matched_filenames = []
+
+        for filename in glob.glob(os.path.join(directory, "results.{}*pkl".format(filter_))):
+            match = config_id_regex.search(filename)
+            if match:
+                matched_filenames.append(filename)
+                logger.debug("Found file: {}".format(filename))
+                self.load_run(match.group(1), filename)
+
+        return matched_filenames
+
 
 def main():
     # Setup argparser
     parser = argparse.ArgumentParser(description="HpBandSter result object aggregator.")
 
     create_parser = _create_parser()
-
-    add_parser = argparse.ArgumentParser(add_help=False)
+    add_parser = _add_parser()
 
     # Add actions
     sp = parser.add_subparsers()
@@ -59,30 +73,9 @@ def create(args):
     logger.info("Create new aggregated result object")
     ar = AggregatedResults()
 
-    if args.config:
-        config_ = os.path.join(args.directory, args.config)
-    else:
-        configs = [f for f in glob.glob(os.path.join(args.directory, "*.yml"))]
+    ar.config = _load_config(args)
 
-        if len(configs) == 0:
-            raise Exception("Could not find a *.yml file as config. Please specify one")
-        elif len(configs) > 1:
-            raise Exception("Multiple *.yml files found. Please specify one")
-        config_ = configs[0]
-
-    ar.config = config.load_yaml(config_)
-
-    config_id_regex = re.compile(r"results\.{}-([^-]+-)[0-9]+\.pkl".format(args.filter))
-
-    matched_filenames = []
-
-    for filename in glob.glob(os.path.join(args.directory, "results.{}*pkl".format(args.filter))):
-        match = config_id_regex.search(filename)
-        if match:
-            if args.clean:
-                matched_filenames.append(filename)
-            logger.debug("Found file: {}".format(filename))
-            ar.add_run(match[1], filename)
+    matched_filenames = ar.find_runs(args.filter, args.directory)
 
     filename = args.out_name if args.out_name else 'aro.{}.pkl'.format(args.filter)
     result_filename = os.path.join(args.directory, filename)
@@ -91,14 +84,28 @@ def create(args):
         pickle.dump(ar, fh)
 
     if args.clean:
-        # Clean up after results have been aggregated successfully
-        logger.info("Clean up files")
-        for filename in matched_filenames:
-            os.remove(filename)
+        _remove_files(matched_filenames)
 
 
 def add(args):
-    print("Adding...")
+    logger.info("Create new aggregated result object")
+
+    existing_object = os.path.join(args.directory, args.object)
+    if not os.path.isfile(existing_object):
+        raise Exception("Could not find file {}".format(existing_object))
+
+    with open(existing_object, 'rb') as file_:
+        logger.info("Loading file")
+        ar = pickle.load(file_)
+
+    matched_filenames = ar.find_runs(args.filter, args.directory)
+
+    with open(existing_object, 'wb') as fh:
+        logger.info("Write file to {}".format(existing_object))
+        pickle.dump(ar, fh)
+
+    if args.clean:
+        _remove_files(matched_filenames)
 
 
 def _create_parser():
@@ -132,6 +139,56 @@ def _create_parser():
         default=None)
 
     return parser
+
+
+def _add_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-d',
+        '--directory',
+        help='Folder to search for result files.',
+        type=str,
+        default='.')
+    parser.add_argument(
+        '-f',
+        '--filter',
+        help='Search for results.<run-filter>-XXX.pkl files.',
+        type=str,
+        required=True)
+    parser.add_argument(
+        '-o',
+        '--object',
+        help='Existing aggregated results object',
+        type=str,
+        required=True)
+    parser.add_argument(
+        '--clean',
+        help='Remove results.*.pkl files after aggregating them.',
+        action='store_true')
+
+    return parser
+
+
+def _load_config(args):
+    if args.config:
+        config_ = os.path.join(args.directory, args.config)
+    else:
+        configs = [f for f in glob.glob(os.path.join(args.directory, "*.yml"))]
+
+        if len(configs) == 0:
+            raise Exception("Could not find a *.yml file as config. Please specify one")
+        elif len(configs) > 1:
+            raise Exception("Multiple *.yml files found. Please specify one")
+        config_ = configs[0]
+
+    return config.load_yaml(config_)
+
+
+def _remove_files(files):
+    logger.info("Clean up files")
+    for filename in files:
+        os.remove(filename)
+
 
 if __name__ == '__main__':
     main()
