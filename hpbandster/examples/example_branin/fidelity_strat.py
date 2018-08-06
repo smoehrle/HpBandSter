@@ -83,15 +83,12 @@ class FidelityPropToCost(FidelityStrat):
     """
     def __init__(
             self,
-            problem: Problem,
             use_fidelity: Iterable[bool],
             alpha: float = 1.):
         self.use_fidelity = np.array(use_fidelity, dtype=np.bool)
         fidelities = ['z{}'.format(i) for i, v in enumerate(self.use_fidelity) if v]
         super().__init__('propto_cost_{}'.format('_'.join(fidelities)))
 
-        self.problem = problem
-        self.max_cost = problem.cost(fidelity_vector=np.ones(self._num_fidelities))
         self.alpha = alpha
         self.logger = logging.getLogger()
 
@@ -103,11 +100,15 @@ class FidelityPropToCost(FidelityStrat):
     def _num_fidelities(self) -> int:
         return len(self.use_fidelity)
 
+    @property
+    def max_cost(self):
+        return self.run.problem.cost(fidelity_vector=np.ones(self._num_fidelities))
+
     def calc_fidelities(self, norm_budget: float) -> np.ndarray:
         def cost_objective(z: np.ndarray, b: float):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)
             Z[self.use_fidelity] = z
-            return (b - self.problem.cost(fidelity_vector=Z) / self.max_cost)**2
+            return (b - self.run.problem.cost(fidelity_vector=Z) / self.max_cost)**2
 
         def fidelity_objective(z: np.ndarray):
             Z = np.ones_like(self.use_fidelity, dtype=np.float)

@@ -8,6 +8,7 @@ import hpbandster.core.nameserver as hpns
 
 import config
 from worker import SimM2FWorker
+from models import Run, Experiment
 
 
 def parse_cli() -> argparse.Namespace:
@@ -33,10 +34,11 @@ def parse_cli() -> argparse.Namespace:
 
 def start_worker(
         run_id: str,
-        cfg: config.ExperimentConfig,
-        run: config.RunConfig,
+        cfg: Experiment,
+        run: Run,
         host: Optional[str] = None,
         background: bool = False) -> None:
+
     w = SimM2FWorker(
         run.problem,
         run.strategy,
@@ -49,9 +51,9 @@ def start_worker(
     w.run(background)
 
 
-def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: config.ExperimentConfig, run: config.RunConfig):
+def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: Experiment, run: Run):
     config_space = run.problem.build_config_space()
-    hb = run.constructor(
+    hb = run.optimizer_class(
         configspace=config_space,
         run_id=run_id,
         min_budget=cfg.min_budget,
@@ -103,9 +105,10 @@ def main():
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
             for _ in range(args.num_worker):
-                start_worker(run_id_combined, cfg, run, host=host, background=(args.master or args.num_worker > 1))
+                start_worker(run_id_combined, cfg, run, host=host,
+                             background=(args.master or args.num_worker > 1))
         if args.master:
-            pickle_name = '{}-{}-{}'.format(args.run_id, run.display_name.lower(), run_id+cfg.offset)
+            pickle_name = '{}-{}-{}'.format(args.run_id, run.label, run_id + cfg.offset)
             run_master(run_id_combined, pickle_name, ns, cfg, run)
 
     # shutdown nameserver

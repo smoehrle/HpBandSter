@@ -3,6 +3,8 @@ from typing import Dict, Optional
 import numpy as np
 import ConfigSpace as CS
 
+from models import Run
+
 
 class Problem:
     """
@@ -57,6 +59,14 @@ class Problem:
             The loss
         """
         raise NotImplementedError()
+
+    @property
+    def run(self) -> Run:
+        return self._run
+
+    @run.setter
+    def run(self, value) -> Run:
+        self._run = value
 
     @staticmethod
     def build_fidelity_space() -> CS.ConfigurationSpace:

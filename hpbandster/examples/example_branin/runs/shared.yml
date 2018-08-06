@@ -1,32 +1,28 @@
 strategies:
-  - name: 'full'
-    label: 's0'
+  s0:
+    class: 'FullFidelity'
     num_fidelities: 3
-  - name: 'proptobudget'
-    label: 's1'
+  s1:
+    class: 'FidelityPropToBudget'
     use_fidelity: [True, False, False]
-  - name: 'proptobudget'
-    label: 's2'
+  s2:
+    class: 'FidelityPropToBudget'
     use_fidelity: [False, True, False]
-  - name: 'proptobudget'
-    label: 's3'
+  s3:
+    class: 'FidelityPropToBudget'
     use_fidelity: [False, False, True]
-  - name: 'proptobudget'
-    label: 's4'
+  s4:
+    class: 'FidelityPropToBudget'
     use_fidelity: [True, True, True]
-  - name: 'proptocost'
-    label: 's5'
-    problem: 'p1'
+  s5:
+    class: 'FidelityPropToCost'
     use_fidelity: [True, False, False]
-  - name: 'proptocost'
-    label: 's6'
-    problem: 'p1'
+  s6:
+    class: 'FidelityPropToCost'
     use_fidelity: [False, True, False]
-  - name: 'proptocost'
-    label: 's7'
-    problem: 'p1'
+  s7:
+    class: 'FidelityPropToCost'
     use_fidelity: [False, False, True]
-  - name: 'proptocost'
-    label: 's8'
-    problem: 'p1'
+  s8:
+    class: 'FidelityPropToCost'
     use_fidelity: [True, True, True]

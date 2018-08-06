@@ -2,8 +2,9 @@ num_hb_runs: 15
 num_runs: 3
 extend: '../shared.yml'
 problems:
-  - name: 'Branin'
-    label: 'p1'
+  p1:
+    class: 'Branin'
+    module: 'branin'
     pow_z1: 1.
     pow_z2: 1.
     pow_z3: 1.
@@ -15,30 +16,30 @@ problems:
 
 
 runs:
-  - name: 'RandomSearch'
+  - optimizer: 'RandomSearch'
     problem: 'p1'
     strategy: 's0'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's1'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's2'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's3'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's4'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's5'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's6'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's7'
-  - name: 'HyperBand'
+  - optimizer: 'HyperBand'
     problem: 'p1'
     strategy: 's8'
