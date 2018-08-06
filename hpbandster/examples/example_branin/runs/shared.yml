@@ -1,7 +1,6 @@
 strategies:
   s0:
     class: 'FullFidelity'
-    num_fidelities: 3
   s1:
     class: 'FidelityPropToBudget'
     use_fidelity: [True, False, False]

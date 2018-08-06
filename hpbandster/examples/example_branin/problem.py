@@ -10,11 +10,9 @@ class Problem:
     """
     Abstract class defining a problem for the SimM2FWorker
     """
-    _run = None
-    _fidelity_space_cache: Optional[Tuple[CS.Configuration, CS.ConfigurationSpace]] = None
-
     def __init__(self):
-        pass
+        self._run = None
+        self._fidelity_space_cache = None
 
     def __repr__(self):
         raise NotImplementedError('__repr__ of Problem')

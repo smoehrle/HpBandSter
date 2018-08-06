@@ -12,7 +12,6 @@ problems:
 strategies:
   s0:
     class: 'FullFidelity'
-    num_fidelities: 2
   s1:
     class: 'FidelityPropToBudget'
     use_fidelity: [True, False]
