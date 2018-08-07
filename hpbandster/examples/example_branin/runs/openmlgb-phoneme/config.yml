@@ -1,7 +1,7 @@
 extend: '../openml_shared.yml'
 
 problems:
-  gb:
+  p0:
     class: 'OpenMLGB'
     module: 'openml_problem'
     task_id: 9952 # phoneme
