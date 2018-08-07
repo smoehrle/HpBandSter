@@ -22,6 +22,7 @@ def _float_fraction(perc: float, start: float, end: float):
 
 class OpenMLRF(Problem):
     def __init__(self, task_id: int):
+        super().__init__()
         self.task = openml.tasks.get_task(task_id)
         self.data = self.task.get_X_and_y()
 
@@ -68,6 +69,7 @@ class OpenMLRF(Problem):
 
 class OpenMLGB(Problem):
     def __init__(self, task_id: int):
+        super().__init__()
         self.task = openml.tasks.get_task(task_id)
         self.data = self.task.get_X_and_y()
 
