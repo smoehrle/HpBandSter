@@ -84,8 +84,8 @@ class Problem:
     def run(self, value: Run):
         self._run = value
 
-    @staticmethod
-    def build_fidelity_space(config: CS.Configuration,
+    def build_fidelity_space(self,
+                             config: CS.Configuration,
                              config_id: Tuple[int, int, int]) -> CS.ConfigurationSpace:
         """
         Returns

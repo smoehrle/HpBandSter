@@ -103,8 +103,9 @@ class Branin(Problem):
                             fidelities['z1'], fidelities['z2'], fidelities['z3'])
         return np.abs(self.min - y), {}
 
-    @staticmethod
-    def build_fidelity_space() -> CS.ConfigurationSpace:
+    def build_fidelity_space(self,
+                             config: CS.Configuration,
+                             config_id: Tuple[int, int, int]) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
             CS.UniformFloatHyperparameter('z1', lower=0., upper=1.),
