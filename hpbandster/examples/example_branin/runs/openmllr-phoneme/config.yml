@@ -2,12 +2,12 @@ extend: '../openml_shared.yml'
 
 problems:
   p0:
-    class: 'OpenMLRF'
+    class: 'LogisticRegressionOpenML'
     module: 'openml_problem'
     task_id: 9952 # phoneme
 
 plot:
-  title: 'OpenML Phoneme Dataset Random Forest'
+  title: 'OpenML Phoneme Dataset Logistic Regression'
   time_column: 'times_finished'
   value_column: 'losses'
   bigger_is_better: True
