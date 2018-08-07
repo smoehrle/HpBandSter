@@ -6,6 +6,51 @@ problems:
     module: 'openml_problem'
     task_id: 9952 # phoneme
 
+strategies:
+  full:
+    class: 'FullFidelity'
+  pb1:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [True, False]
+  pb2:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [False, True]
+  pball:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [True, True]
+  pc1:
+    class: 'FidelityPropToCost'
+    use_fidelity: [True, False]
+  pc2:
+    class: 'FidelityPropToCost'
+    use_fidelity: [False, True]
+  pcall:
+    class: 'FidelityPropToCost'
+    use_fidelity: [True, True]
+
+runs:
+  - optimizer: 'RandomSearch'
+    problem: 'p0'
+    strategy: 'full'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pb1'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pb2'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pball'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pc1'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pc2'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pcall'
+
 plot:
   title: 'OpenML Phoneme Dataset Logistic Regression'
   time_column: 'times_finished'
