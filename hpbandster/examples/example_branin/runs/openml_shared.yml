@@ -1,0 +1,58 @@
+extend: './shared.yml'
+
+strategies:
+  full:
+    class: 'FullFidelity'
+  pb1:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [True, False, False]
+  pb2:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [False, True, False]
+  pb3:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [False, False, True]
+  pball:
+    class: 'FidelityPropToBudget'
+    use_fidelity: [True, True, True]
+  pc1:
+    class: 'FidelityPropToCost'
+    use_fidelity: [True, False, False]
+  pc2:
+    class: 'FidelityPropToCost'
+    use_fidelity: [False, True, False]
+  pc3:
+    class: 'FidelityPropToCost'
+    use_fidelity: [False, False, True]
+  pcall:
+    class: 'FidelityPropToCost'
+    use_fidelity: [True, True, True]
+
+runs:
+  - optimizer: 'RandomSearch'
+    problem: 'p0'
+    strategy: 'full'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pb1'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pb2'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pb3'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pball'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pc1'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pc2'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pc3'
+  - optimizer: 'HyperBand'
+    problem: 'p0'
+    strategy: 'pcall'

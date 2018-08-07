@@ -1,52 +1,10 @@
-num_hb_runs: 15
-num_runs: 128
-extend: '../shared.yml'
+extend: '../openml_shared.yml'
 
 problems:
   gb:
     class: 'OpenMLGB'
     module: 'openml_problem'
     task_id: 9952 # phoneme
-  rf:
-    class: 'OpenMLRF'
-    module: 'openml_problem'
-    task_id: 9952 # phoneme
-
-strategies:
-  full:
-    class: 'FullFidelity'
-  pb1:
-    class: 'FidelityPropToBudget'
-    use_fidelity: [True, False, False]
-  pb2:
-    class: 'FidelityPropToBudget'
-    use_fidelity: [False, True, False]
-  pb3:
-    class: 'FidelityPropToBudget'
-    use_fidelity: [False, False, True]
-  pball:
-    class: 'FidelityPropToBudget'
-    use_fidelity: [True, True, True]
-  pc:
-    class: 'FidelityPropToCost'
-    use_fidelity: [True, True, True]
-
-runs:
-  - optimizer: 'RandomSearch'
-    problem: 'gb'
-    strategy: 'full'
-  - optimizer: 'HyperBand'
-    problem: 'gb'
-    strategy: 'pb1'
-  - optimizer: 'HyperBand'
-    problem: 'gb'
-    strategy: 'pb2'
-  - optimizer: 'HyperBand'
-    problem: 'gb'
-    strategy: 'pb3'
-  - optimizer: 'HyperBand'
-    problem: 'gb'
-    strategy: 'pball'
 
 plot:
   title: 'OpenML Phoneme Dataset GadientBoostedTrees'
