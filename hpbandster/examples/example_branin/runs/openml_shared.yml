@@ -1,4 +1,6 @@
 extend: './shared.yml'
+num_hb_runs: 15
+num_runs: 128
 
 strategies:
   full:
