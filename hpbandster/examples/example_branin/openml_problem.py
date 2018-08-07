@@ -51,7 +51,7 @@ class OpenMLRF(Problem):
     def build_fidelity_space(config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
-            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=2000),
+            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=200),
             CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=10),
         ])
         return config_space
@@ -99,9 +99,9 @@ class OpenMLGB(Problem):
     def build_fidelity_space(config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
-            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=200),
-            CS.UniformFloatHyperparameter('subsample', lower=0.1, upper=1.),
-            CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=10),
+            CS.UniformIntegerHyperparameter('n_estimators', lower=10, upper=100),
+            CS.UniformFloatHyperparameter('subsample', lower=0., upper=1.),
+            CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=5),
         ])
         return config_space
 
