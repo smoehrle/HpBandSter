@@ -204,7 +204,7 @@ def get_config_ids(param: argparse.Namespace) -> List[int]:
             'hyperband_fid_propto_cost-',
         ]
 
-    regex = re.compile("results\.{}-([^-]+-)[0-9]+\.pkl".format(param.run_filter))
+    regex = re.compile("results\.{}-(.+?)-[0-9]+\.pkl".format(param.run_filter))
     config_ids = set()
     for filename in glob.glob(os.path.join(param.working_dir, "results.*pkl")):
         result = regex.search(filename)
