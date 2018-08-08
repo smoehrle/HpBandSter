@@ -26,7 +26,7 @@ class AggregatedResults():
         self.runs[config_id].append(run)
 
     def find_runs(self, filter_, directory):
-        config_id_regex = re.compile(r"results\.{}-([^-]+-)[0-9]+\.pkl".format(filter_))
+        config_id_regex = re.compile(r"results\.{}-(.+)-[0-9]+\.pkl".format(filter_))
 
         matched_filenames = []
 
