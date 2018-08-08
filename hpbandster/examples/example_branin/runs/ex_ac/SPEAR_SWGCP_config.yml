@@ -1,37 +1,8 @@
-num_hb_runs: 15
-num_runs: 256
+extend: 'AC_shared.yml'
 
 problems:
-  - name: 'ac'
-    label: 'p0'
-    tarfile: '/home/moehrles/data.tar.gz'
+  p0:
     dataset_name: 'SPEAR_SWGCP'
 
-strategies:
-  - name: 'full'
-    label: 's0'
-    num_fidelities: 2
-  - name: 'proptobudget'
-    label: 's1'
-    use_fidelity: [True, False]
-  - name: 'proptobudget'
-    label: 's2'
-    use_fidelity: [False, True]
-  - name: 'proptobudget'
-    label: 's3'
-    use_fidelity: [True, True]
-
-
-runs:
-  - name: 'RandomSearch'
-    problem: 'p0'
-    strategy: 's0'
-  - name: 'HyperBand'
-    problem: 'p0'
-    strategy: 's1'
-  - name: 'HyperBand'
-    problem: 'p0'
-    strategy: 's2'
-  - name: 'HyperBand'
-    problem: 'p0'
-    strategy: 's3'
+plot:
+  title: 'AC - SPEAR_SWGCP'
