@@ -11,15 +11,27 @@ import numpy as np
 from problem import Problem
 from models import Run
 
-Dataset = namedtuple('Dataset', ['filename', 'max_cutoff', 'time_scale_factor'])
+Dataset = namedtuple('Dataset', ['filename', 'max_cutoff', 'max_time'])
 
 datasets = {
     'SPEAR_QCP': Dataset(
         filename='data/AMAI_data/SPEAR/random-SPEAR-QCP-5s-results-1000train-1000test.txt',
-        max_cutoff=50, time_scale_factor=10),
+        max_cutoff=50, max_time=5),
     'SPEAR_SWGCP': Dataset(
         filename='data/AMAI_data/SPEAR/random-SPEAR-SWGCP-5s-results-1000train-1000test.txt',
-        max_cutoff=50, time_scale_factor=10),
+        max_cutoff=50, max_time=5),
+    'SAPScont_QCP': Dataset(
+        filename='data/AMAI_data/SAPScont/random-newQCPsat_SAPScont-300s-1000train-1000test.txt',
+        max_cutoff=50, max_time=300),
+    'SAPScont_SWGCP': Dataset(
+        filename='data/AMAI_data/SAPScont/random-SWGCPsat_SAPScont-300s-1000train-1000test.txt',
+        max_cutoff=50, max_time=300),
+    'CPLEX_CATS': Dataset(
+        filename='data/AMAI_data/CPLEX/random-CPLEX-CATS100-5s-1000train-1000test.txt',
+        max_cutoff=50, max_time=5),
+    'CPLEX_Orlib': Dataset(
+        filename='data/AMAI_data/CPLEX/random-CPLEX-Orlib-300s-70train-70test.txt',
+        max_cutoff=50, max_time=300),
 }
 
 
@@ -109,7 +121,7 @@ class AlgorithmConfiguration(Problem):
         test_loss = self._calc_loss(self.instance_config_result_matix[:, config['x']], self.dataset.max_cutoff)
         self.logger.debug("Loss: {}, test_loss: {}".format(loss, test_loss))
         return loss, {
-            'cost': loss / self.dataset.time_scale_factor,
+            'cost': loss * (self.dataset.max_time / self.dataset.max_cutoff),
             'test_loss': test_loss
         }
 
