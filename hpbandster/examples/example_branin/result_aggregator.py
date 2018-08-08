@@ -39,6 +39,17 @@ class AggregatedResults():
 
         return matched_filenames
 
+    @staticmethod
+    def load(filename):
+        if not os.path.isfile(filename):
+            raise Exception("Could not find file {}".format(filename))
+
+        with open(filename, 'rb') as file_:
+            logger.info("Loading file")
+            ar = pickle.load(file_)
+        return ar
+
+
 
 def main():
     # Setup argparser
@@ -90,18 +101,13 @@ def create(args):
 def add(args):
     logger.info("Create new aggregated result object")
 
-    existing_object = os.path.join(args.directory, args.object)
-    if not os.path.isfile(existing_object):
-        raise Exception("Could not find file {}".format(existing_object))
-
-    with open(existing_object, 'rb') as file_:
-        logger.info("Loading file")
-        ar = pickle.load(file_)
+    filename = os.path.join(args.directory, args.object)
+    ar = AggregatedResults.load(filename)
 
     matched_filenames = ar.find_runs(args.filter, args.directory)
 
-    with open(existing_object, 'wb') as fh:
-        logger.info("Write file to {}".format(existing_object))
+    with open(filename, 'wb') as fh:
+        logger.info("Write file to {}".format(filename))
         pickle.dump(ar, fh)
 
     if args.clean:
