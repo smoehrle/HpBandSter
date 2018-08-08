@@ -9,7 +9,7 @@ import ConfigSpace as CS
 import numpy as np
 
 from problem import Problem
-
+from models import Run
 
 Dataset = namedtuple('Dataset', ['filename', 'max_cutoff', 'time_scale_factor'])
 
@@ -27,6 +27,7 @@ class AlgorithmConfiguration(Problem):
     """
     """
     def __init__(self, tarfile, dataset_name):
+        super().__init__()
         self.logger = logging.getLogger(__name__)
 
         if dataset_name not in datasets:
@@ -34,12 +35,9 @@ class AlgorithmConfiguration(Problem):
 
         self.dataset_name = dataset_name
         self.dataset = datasets[dataset_name]
-
-        seed = str(time.time())
-        self.seed = int.from_bytes(seed.encode(), byteorder='big')
+        self.seed = None
 
         self.logger.debug("___AC_INIT___")
-        self.logger.debug("Seed: {}".format(self.seed))
 
         with tar.open(tarfile, 'r:gz') as archive:
             with archive.extractfile(self.dataset.filename) as f:
@@ -121,7 +119,7 @@ class AlgorithmConfiguration(Problem):
 
         return results.sum()
 
-    def build_fidelity_space(self) -> CS.ConfigurationSpace:
+    def build_fidelity_space(self, config, config_id) -> CS.ConfigurationSpace:
         cs = CS.ConfigurationSpace()
         cs.add_hyperparameters([
             CS.UniformIntegerHyperparameter('n_instances', lower=0, upper=self.num_instances),
@@ -138,8 +136,7 @@ class AlgorithmConfiguration(Problem):
             The only hyperparameter for this problem is the index which selects the predefined algorithm configuration
         """
         config_space = CS.ConfigurationSpace()
-        config_space.add_hyperparameter(
-            CS.UniformIntegerHyperparameter('x', lower=0, upper=self.num_configs-1))
+        config_space.add_hyperparameter(CS.UniformIntegerHyperparameter('x', lower=0, upper=self.num_configs-1))
         return config_space
 
     def generate_seed(self, iteration):
@@ -155,6 +152,11 @@ class AlgorithmConfiguration(Problem):
         -------
             A number between 0 and 2**32-1
         """
+
+        if not self.seed:
+            seed = str(self.run.experiment.run_id)
+            self.seed = int.from_bytes(seed.encode(), byteorder='big')
+            self.logger.debug("Seed: {}".format(self.seed))
 
         random.seed(self.seed)
         for _ in range(iteration + 1):
