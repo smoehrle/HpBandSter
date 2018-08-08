@@ -1,0 +1,8 @@
+extend: 'AC_shared.yml'
+
+problems:
+  p0:
+    dataset_name: 'CPLEX_CATS'
+
+plot:
+  title: 'AC - CPLEX_CATS'

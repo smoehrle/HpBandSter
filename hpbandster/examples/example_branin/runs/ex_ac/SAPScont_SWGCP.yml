@@ -1,0 +1,8 @@
+extend: 'AC_shared.yml'
+
+problems:
+  p0:
+    dataset_name: 'SAPScont_SWGCP'
+
+plot:
+  title: 'AC - SAPScont_SWGCP'
