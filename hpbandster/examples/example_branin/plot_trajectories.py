@@ -10,16 +10,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from typing import List
 
+from result_aggregator import AggregatedResults
 
-def extract_result(results_object):
+
+def extract_result(results_object, bigger_is_better):
     """
         Returns the best configurations over time, but also returns the cummulative budget
 
         Parameters:
         -----------
-            all_budgets: bool
-                If set to true all runs (even those not with the largest budget) can be the incumbent.
-                Otherwise, only full budget runs are considered
+            result_object:
+                HyperBand result object
+
+            bigger_is_better: bool
+                If set to true then a run with a bigger budget is always considered better than
+                the current best run with a lower budget
+
+                If set to false a run is considered better only if the budget is equal or greater
+                and the loss is smaller
 
         Returns:
         --------
@@ -51,14 +59,18 @@ def extract_result(results_object):
         cummulative_budget += r.budget
         try:
             cummulative_cost += r.info['cost']
-        except: pass
+        except:
+            pass
 
         if r.loss is None:
             continue
 
-        if (r.budget >= incumbent_budget and r.loss < current_incumbent):
-        # if ((r.budget == incumbent_budget and r.loss < current_incumbent) or\
-        #      r.budget > incumbent_budget):
+        if bigger_is_better:
+            is_better = r.budget > incumbent_budget or (r.budget == incumbent_budget and r.loss < current_incumbent)
+        else:
+            is_better = r.budget >= incumbent_budget and r.loss < current_incumbent
+
+        if is_better:
             current_incumbent = r.loss
             incumbent_budget = r.budget
 
@@ -175,15 +187,12 @@ def plot_losses(incumbent_trajectories, title, regret=True, incumbent=None,
     return (fig, ax)
 
 
-def load_trajectories(config_id, time_col: str, working_dir: str = '.'):
+def load_trajectories(runs, time_col: str, value_col: str, bigger_is_better: bool):
     df = pd.DataFrame()
-    for fn in glob.glob(os.path.join(working_dir, 'results.{}*.pkl'.format(config_id))):
-        print('Load {} ...'.format(fn), end="\r")
-        with open(fn, 'rb') as fh:
-            result = pickle.load(fh)
-        datum = extract_result(result)
+    for i, run in enumerate(runs):
+        datum = extract_result(run, bigger_is_better)
         times = np.array(datum[time_col])
-        tmp = pd.DataFrame({fn: datum['losses']}, index=times)
+        tmp = pd.DataFrame({str(i): datum[value_col]}, index=times)
         df = df.join(tmp, how='outer')
     df = fill_trajectories(df)
 
@@ -193,62 +202,50 @@ def load_trajectories(config_id, time_col: str, working_dir: str = '.'):
     }
 
 
-def get_config_ids(param: argparse.Namespace) -> List[int]:
-    if not param.all:
-        return [
-            'randomsearch-',
-            'hyperband_propto_budget_z0-',
-            'hyperband_propto_budget_z1-',
-            'hyperband_propto_budget_z2-',
-            'hyperband_propto_budget_z0_z1_z2-',
-            'hyperband_fid_propto_cost-',
-        ]
-
-    regex = re.compile("results\.{}-(.+?)-[0-9]+\.pkl".format(param.run_filter))
-    config_ids = set()
-    for filename in glob.glob(os.path.join(param.working_dir, "results.*pkl")):
-        result = regex.search(filename)
-        if result and result[1] not in config_ids:
-            config_ids.add(result[1])
-    return sorted(config_ids, reverse=True)
-
-
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter plot trajectories utility functions.')
     parser.add_argument(
-        '--working-dir',
-        help='Folder to search for result files.',
-        type=str,
-        default='.')
-    parser.add_argument(
-        '--run-filter',
-        help='Search for results.<run-filter>...pkl files.',
+        '--file',
+        help='Aggregated result file',
         type=str,
         required=True)
-    parser.add_argument(
-        '--all',
-        help='Show all config_ids',
-        type=bool,
-        default=True)
     parser.add_argument(
         '--time-column',
         help='Data column shown as x-axis. Usually "cummulative_cost" or "times_finished".',
         type=str,
-        default='cummulative_cost')
+        default=None)
+    parser.add_argument(
+        '--value-column',
+        help='Data column shown as y-axis. Usually "losses" or "test_losses".',
+        type=str,
+        default=None)
+    parser.add_argument(
+        '--bigger-is-better',
+        help='Set this flag if a bigger budget should be always better',
+        action='store_true')
+
     return parser.parse_args()
 
 
 def main():
-    cli_param = parse_cli()
-    all_losses = {
-        config_id: load_trajectories(
-            '{}-{}'.format(cli_param.run_filter, config_id),
-            cli_param.time_column,
-            cli_param.working_dir)
-        for config_id in get_config_ids(cli_param)
-    }
+    args = parse_cli()
 
-    plot_losses(all_losses, 'Branin', show=True)
+    ar = AggregatedResults.load(args.file)
+
+    all_losses = dict()
+    time_col = args.time_column if args.time_column else ar.config['plot']['time_column']
+    value_col = args.value_column if args.value_column else ar.config['plot']['value_column']
+    bigger_is_better = args.bigger_is_better if args.bigger_is_better else ar.config['plot']['bigger_is_better']
+
+    for config_id in sorted(ar.runs.keys(), reverse=True):
+        all_losses[config_id] = load_trajectories(
+            ar.runs[config_id],
+            time_col,
+            value_col,
+            bigger_is_better
+        )
+
+    plot_losses(all_losses, ar.config['plot']['title'], show=True)
 
 
 if __name__ == "__main__":
