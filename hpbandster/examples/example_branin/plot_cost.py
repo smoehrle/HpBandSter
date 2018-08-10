@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from branin import Branin
+from problem.branin import Branin
 from fidelity_strat import FidelityPropToCost
 
 resolution = 50

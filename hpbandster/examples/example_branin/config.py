@@ -8,8 +8,8 @@ from collections import Mapping
 import yaml
 import hpbandster.optimizers
 
-from problem import Problem
-import fidelity_strat as strat
+import problem
+import strategy
 from models import Run, Experiment, Plot
 
 
@@ -49,8 +49,8 @@ def load_yaml(file_path):
 
 def load_runs(
         runs: List[Dict[str, str]],
-        strategies: Dict[str, strat.FidelityStrat],
-        problems: Dict[str, Problem]) -> List[Run]:
+        strategies: Dict[str, strategy.Strategy],
+        problems: Dict[str, problem.Problem]) -> List[Run]:
     result = []
     for kwargs in runs:
         opt_class_name = kwargs.pop('optimizer')
@@ -80,7 +80,7 @@ def load_runs(
 def load_problems(problems: Dict[str, Dict[str, str]]) -> dict:
     result = {}
     for label, kwargs in problems.items():
-        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module'))
+        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module', problem))
         result[label] = cls_, kwargs
     return result
 
@@ -88,7 +88,7 @@ def load_problems(problems: Dict[str, Dict[str, str]]) -> dict:
 def load_strategies(strategies: Dict[str, Dict[str, str]]) -> dict:
     result = {}
     for label, kwargs in strategies.items():
-        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module', strat))
+        cls_ = _load_class(kwargs.pop('class'), kwargs.pop('module', strategy))
         result[label] = cls_, kwargs
     return result
 

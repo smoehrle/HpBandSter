@@ -1,5 +1,6 @@
 import time
 from typing import Tuple
+
 import numpy as np
 import ConfigSpace as CS
 
@@ -23,12 +24,8 @@ class SimM2FWorker(Worker):
 
         Parameters
         ----------
-        problem :
-            A problem instance (e.g. branin)
-        strategy :
-            A strategy which splits the budget
-        cost :
-            Plugable cost function for time simulation
+        run :
+            A run combining a problem with a strategy
         max_budget :
             The highest possible budget
         args*, kqargs*:
@@ -51,6 +48,8 @@ class SimM2FWorker(Worker):
             Contains the parameters which should be evaluated in this run
         budget :
             Available budget, which can be used for this run
+        config_id :
+            HpBandSter config_id
 
         Returns
         -------

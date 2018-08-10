@@ -2,8 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import branin
-
+from example_branin import problem
 
 num = 50
 
