@@ -4,7 +4,7 @@ import scipy.stats
 from tabulate import tabulate
 
 import util
-from branin import Branin
+from problem.branin import Branin
 from fidelity_strat import FidelityPropToBudget
 
 num_configs = 1000
