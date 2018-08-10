@@ -32,6 +32,9 @@ datasets = {
     'CPLEX_Orlib': Dataset(
         filename='data/AMAI_data/CPLEX/random-CPLEX-Orlib-300s-70train-70test.txt',
         max_cutoff=50, max_time=300),
+    'Satenstein_QCP': Dataset(
+        filename='data/AMAI_data/Satenstein/QCP-500-random-dls-500-random-nondls-parameters-runobjruntime-overallobjmean10-time5-algosatenstein-stats-firstinstance_list_0-1000train-1000test.txt',
+        max_cutoff=50, max_time=5),
 }
 
 
@@ -66,7 +69,7 @@ class AlgorithmConfiguration(Problem):
         self.min_cutoff = np.percentile(self.instance_config_result_matix, 30)
 
         self.logger.debug("Num_config: {}, num_instances: {}".format(self.num_configs, self.num_instances))
-        self.logger.debug("Outlier: {}, min_cutoff: {}".format(len(i), self.min_cutoff))
+        self.logger.debug("Outlier: {}, min_cutoff: {}".format(len(i[0]), self.min_cutoff))
 
     def __repr__(self):
         return "AC_{}".format(self.dataset_name)
