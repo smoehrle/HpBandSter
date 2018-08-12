@@ -1,0 +1,10 @@
+extend: '../openml_shared.yml'
+
+problems:
+  p0:
+    class: 'LogisticRegressionOpenML'
+    module: 'openml_problem'
+    task_id: 3573  # mnist
+
+plot:
+  title: 'Logistic Regression on MNIST Dataset (OpenML)'

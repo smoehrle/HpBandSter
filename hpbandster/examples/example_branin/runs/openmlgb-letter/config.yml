@@ -1,0 +1,10 @@
+extend: '../openml_shared.yml'
+
+problems:
+  p0:
+    class: 'OpenMLGB'
+    module: 'openml_problem'
+    task_id: 6 # letter
+
+plot:
+  title: 'Gradient Boosted Trees on Letter Dataset (OpenML)'
