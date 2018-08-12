@@ -137,7 +137,7 @@ class OpenMLRF(OpenMLClassification):
     def build_fidelity_space(self, config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
-            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=200),
+            CS.UniformIntegerHyperparameter('n_estimators', lower=20, upper=500),
             CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=10),
         ] + self.task_fidelities(classes=False, samples=True, features=False))
         return config_space
