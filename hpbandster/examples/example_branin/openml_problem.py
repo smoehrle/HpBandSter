@@ -132,7 +132,7 @@ class OpenMLRF(OpenMLClassification):
                                                         oob_score=True)
         X, y = self.get_X_and_y(config_id, fidelities)
         model.fit(X, y)
-        return model.oob_score_, {}
+        return 1 - model.oob_score_, {}
 
     def build_fidelity_space(self, config, config_id) -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
