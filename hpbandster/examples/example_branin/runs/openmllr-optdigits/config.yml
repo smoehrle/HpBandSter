@@ -1,0 +1,10 @@
+extend: '../openml_shared.yml'
+
+problems:
+  p0:
+    class: 'LogisticRegressionOpenML'
+    module: 'openml_problem'
+    task_id: 28  # opt digits
+
+plot:
+  title: 'Logistic Regression on OptDigits Dataset (OpenML)'
