@@ -8,6 +8,3 @@ problems:
 
 plot:
   title: 'OpenML Phoneme Dataset Random Forest'
-  time_column: 'times_finished'
-  value_column: 'losses'
-  bigger_is_better: True
