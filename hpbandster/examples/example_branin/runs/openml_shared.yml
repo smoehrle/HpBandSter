@@ -1,6 +1,6 @@
 extend: './shared.yml'
 num_hb_runs: 15
-num_runs: 128
+num_runs: 256
 
 strategies:
   full:
@@ -58,3 +58,8 @@ runs:
   - optimizer: 'HyperBand'
     problem: 'p0'
     strategy: 'pcall'
+
+plot:
+  time_column: 'times_finished'
+  value_column: 'losses'
+  bigger_is_better: False
