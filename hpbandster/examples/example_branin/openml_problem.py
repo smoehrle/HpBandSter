@@ -169,8 +169,10 @@ class OpenMLGB(OpenMLClassification):
         model = sklearn.ensemble.GradientBoostingClassifier(n_estimators=fidelities['n_estimators'],
                                                             max_depth=fidelities['max_depth'],
                                                             subsample=fidelities['subsample'],
+                                                            loss=config['loss'],
                                                             max_features=config['max_features'],
                                                             learning_rate=config['learning_rate'],
+                                                            min_samples_split=config['min_samples_split'],
                                                             min_samples_leaf=config['min_samples_leaf'])
         X, y = self.get_X_and_y(config_id, fidelities)
         X_train, X_test, y_train, y_test =\
@@ -185,7 +187,7 @@ class OpenMLGB(OpenMLClassification):
         config_space.add_hyperparameters([
             CS.UniformIntegerHyperparameter('n_estimators', lower=10, upper=100),
             CS.UniformFloatHyperparameter('subsample', lower=0., upper=1.),
-            CS.UniformIntegerHyperparameter('max_depth', lower=2, upper=5),
+            CS.UniformIntegerHyperparameter('max_depth', lower=1, upper=5),
         ])
         return config_space
 
@@ -193,8 +195,10 @@ class OpenMLGB(OpenMLClassification):
     def build_config_space() -> CS.ConfigurationSpace:
         config_space = CS.ConfigurationSpace()
         config_space.add_hyperparameters([
-            CS.UniformFloatHyperparameter('learning_rate', lower=0.01, upper=1.),
-            CS.UniformIntegerHyperparameter('min_samples_leaf', lower=1, upper=4),
+            CS.UniformFloatHyperparameter('learning_rate', lower=0.01, upper=2.),
+            CS.UniformIntegerHyperparameter('min_samples_leaf', lower=1, upper=6),
+            CS.UniformIntegerHyperparameter('min_samples_split', lower=2, upper=6),
             CS.CategoricalHyperparameter('max_features', choices=['sqrt', 'log2', None]),
+            CS.CategoricalHyperparameter('loss', choices=['deviance', 'exponential']),
         ])
         return config_space
