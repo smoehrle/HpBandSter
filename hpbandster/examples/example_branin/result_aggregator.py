@@ -50,7 +50,6 @@ class AggregatedResults():
         return ar
 
 
-
 def main():
     # Setup argparser
     parser = argparse.ArgumentParser(description="HpBandSter result object aggregator.")

@@ -8,7 +8,8 @@ from models import Run
 
 class Strategy:
     """
-    This is a parent class for arbitrary fidelity strategies
+    This is a parent class defining a common interface for arbitrary fidelity
+    strategies.
     """
     def __init__(self, name):
         self.name = name
@@ -46,4 +47,3 @@ class Strategy:
     @run.setter
     def run(self, value: Run):
         self._run = value
-

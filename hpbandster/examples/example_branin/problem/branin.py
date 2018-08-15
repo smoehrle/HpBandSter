@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 from typing import Dict, Tuple
 
-from problem import Problem
 import ConfigSpace as CS
 import numpy as np
+
+from .problem import Problem
 
 
 def _boca_deviation(x: np.ndarray, z: np.ndarray,

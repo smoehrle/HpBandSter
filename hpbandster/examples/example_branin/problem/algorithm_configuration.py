@@ -106,7 +106,6 @@ class AlgorithmConfiguration(Problem):
             # Problem: since the seed is not run but only iteration dependend the same
             # problem instances are evaluated across different runs 
             seed = self.generate_seed(config_id[0])
-            print("ConfigId: {}, Seed: {}".format(config_id[0], seed))
             np.random.seed(seed)
             i = sorted(np.random.choice(self.num_instances,
                                         fidelities['n_instances'],
