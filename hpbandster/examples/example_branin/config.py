@@ -62,15 +62,15 @@ def load_runs(
         run_label = '{}-{}-{}'.format(opt_label, problem_label, strategy_label).lower()
 
         ctor, kwargs = problems[problem_label]
-        problem = ctor(**kwargs)
+        problem_instance = ctor(**kwargs)
 
         ctor, kwargs = strategies[strategy_label]
-        strategy = ctor(**kwargs)
+        strategy_instance = ctor(**kwargs)
 
         run = Run(
             optimizer_class=opt_cls,
-            problem=problem,
-            strategy=strategy,
+            problem=problem_instance,
+            strategy=strategy_instance,
             label=run_label)
 
         result.append(run)

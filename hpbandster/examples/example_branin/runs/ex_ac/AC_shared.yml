@@ -4,20 +4,19 @@ num_runs: 256
 problems:
   p0:
     class: 'AlgorithmConfiguration'
-    module: 'algorithm_configuration'
     tarfile: '/home/stefan/Downloads/data.tar.gz'
 
 strategies:
   s0:
     class: 'FullFidelity'
   s1:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [True, False]
   s2:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [False, True]
   s3:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [True, True]
 
 
