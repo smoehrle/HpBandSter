@@ -34,7 +34,7 @@ def calc_trajectory(xi, yi):
     fid_filter[xi] = True
     fid_filter[yi] = True
     trajectory = np.empty((len(budgets), 2))
-    strategy = PropToCost(branin, use_fidelity=fid_filter)
+    strategy = PropToCost(branin, fid_filter)
     for i, b in enumerate(norm_budgets):
         z = strategy.calc_fidelities(b)
         trajectory[i, 0] = z[xi]
