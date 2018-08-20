@@ -13,7 +13,7 @@ import strategy
 from models import Run, Experiment, Plot
 
 
-def load(file_path: str, run_id: str) -> Experiment:
+def load(file_path: str, run_id: str, load_runs: bool=True) -> Experiment:
     """
     Load a config by the given filepath. Working_dir is automatically set
     to the config location.
@@ -22,6 +22,12 @@ def load(file_path: str, run_id: str) -> Experiment:
     ----------
     file_path :
         Path to a yaml config file
+    run_id :
+        Unique run id, e.g. the cluster run + task id
+    load_runs :
+        Flag which optionally can skip the run construction. Run construction
+        may be expensive due to the instantiation of problems which load a lot
+        of data in their __init__.
 
     Returns
     -------
@@ -31,7 +37,10 @@ def load(file_path: str, run_id: str) -> Experiment:
     dict_['working_dir'] = os.path.dirname(file_path)
     problems = load_problems(dict_.pop('problems'))
     strategies = load_strategies(dict_.pop('strategies'))
-    runs = load_runs(dict_.pop('runs'), strategies, problems)
+    if load_runs:
+        runs = load_runs(dict_.pop('runs'), strategies, problems)
+    else:
+        del dict_['runs']
     plot = Plot(**dict_.pop('plot'))
     return Experiment(runs=runs, run_id=run_id, plot=plot, **dict_)
 
