@@ -168,7 +168,7 @@ class AlgorithmConfiguration(Problem):
         """
 
         if not self.seed:
-            seed = str(self.run.experiment.run_id)
+            seed = str(self.run.experiment.job_id) + str(self.run_id)
             self.seed = int.from_bytes(seed.encode(), byteorder='big')
             self.logger.debug("Seed: {}".format(self.seed))
 
@@ -176,3 +176,9 @@ class AlgorithmConfiguration(Problem):
         for _ in range(iteration + 1):
             val = random.getrandbits(32)
         return val
+
+    @Problem.run_id.setter
+    def run_id(self, value: int):
+        # Reset seed because of new run_id
+        self.seed = None
+        self._run_id = value

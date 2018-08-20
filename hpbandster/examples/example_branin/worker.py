@@ -16,7 +16,8 @@ class SimM2FWorker(Worker):
     """
     def __init__(
             self,
-            run: Run,
+            run_config: Run,
+            run_id2: int,
             max_budget: float,
             *args, **kwargs):
         """
@@ -26,6 +27,9 @@ class SimM2FWorker(Worker):
         ----------
         run :
             A run combining a problem with a strategy
+        run_id2 :
+            The actual run_id. run_id is used by the worker which is actual the job_id
+            this run_id indicates the repetition of the given run_config
         max_budget :
             The highest possible budget
         args*, kqargs*:
@@ -33,7 +37,8 @@ class SimM2FWorker(Worker):
         """
 
         super().__init__(*args, **kwargs)
-        self.run_config = run
+        self.run_config = run_config
+        run_config.problem.run_id = run_id2
         self.max_budget = max_budget
 
     def compute(self, config: CS.ConfigurationSpace, budget: float,
