@@ -249,7 +249,12 @@ def main():
             bigger_is_better
         )
 
-    plot_losses(all_losses, ar.config.plot.title, show=True)
+    plot_losses(
+        all_losses,
+        ar.config.plot.title,
+        xlabel=time_col,
+        ylabel=value_col,
+        show=True)
 
 
 if __name__ == "__main__":
