@@ -33,13 +33,12 @@ def parse_cli() -> argparse.Namespace:
 
 
 def start_worker(
-        run_id: str,
         cfg: Experiment,
         run: Run,
         host: Optional[str] = None,
         background: bool = False) -> None:
 
-    w = SimM2FWorker(run, cfg.max_budget, run_id=run_id, host=host)
+    w = SimM2FWorker(run, cfg.max_budget, run_id=cfg.run_id, host=host)
 
     assert cfg.working_dir is not None, "Need working_dir to load nameserver credentials."
     w.load_nameserver_credentials(cfg.working_dir)
@@ -47,11 +46,11 @@ def start_worker(
     w.run(background)
 
 
-def run_master(run_id: str, pickle_name: str, ns: hpns.NameServer, cfg: Experiment, run: Run):
+def run_master(pickle_name: str, ns: hpns.NameServer, cfg: Experiment, run: Run):
     config_space = run.problem.build_config_space()
     hb = run.optimizer_class(
         configspace=config_space,
-        run_id=run_id,
+        run_id=cfg.run_id,
         min_budget=cfg.min_budget,
         max_budget=cfg.max_budget,
         eta=3,
@@ -86,7 +85,7 @@ def main():
 
     # start name server
     if args.master:
-        ns = hpns.NameServer(run_id=run_id_combined, nic_name=args.nic_name, working_directory=cfg.working_dir)
+        ns = hpns.NameServer(run_id=cfg.run_id, nic_name=args.nic_name, working_directory=cfg.working_dir)
         ns.start()
 
     runs = [(i, run) for run in cfg.runs for i in range(cfg.num_runs)]
@@ -101,11 +100,11 @@ def main():
         if args.worker:
             host = hpns.nic_name_to_host(args.nic_name)
             for _ in range(args.num_worker):
-                start_worker(run_id_combined, cfg, run, host=host,
+                start_worker(cfg, run, host=host,
                              background=(args.master or args.num_worker > 1))
         if args.master:
             pickle_name = '{}-{}-{}'.format(args.run_id, run.label, run_id + cfg.offset)
-            run_master(run_id_combined, pickle_name, ns, cfg, run)
+            run_master(pickle_name, ns, cfg, run)
 
     # shutdown nameserver
     if args.master:

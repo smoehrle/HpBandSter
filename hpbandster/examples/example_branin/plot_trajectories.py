@@ -4,6 +4,7 @@ import pickle
 import sys
 import argparse
 import re
+import logging
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,8 @@ import matplotlib.pyplot as plt
 from typing import List
 
 from result_aggregator import AggregatedResults
+
+logger = logging.getLogger(__name__)
 
 
 def extract_result(results_object, bigger_is_better):
@@ -233,11 +236,12 @@ def main():
     ar = AggregatedResults.load(args.file)
 
     all_losses = dict()
-    time_col = args.time_column if args.time_column else ar.config['plot']['time_column']
-    value_col = args.value_column if args.value_column else ar.config['plot']['value_column']
-    bigger_is_better = args.bigger_is_better if args.bigger_is_better else ar.config['plot']['bigger_is_better']
+    time_col = args.time_column if args.time_column else ar.config.plot.time_column
+    value_col = args.value_column if args.value_column else ar.config.plot.value_column
+    bigger_is_better = args.bigger_is_better if args.bigger_is_better else ar.config.plot.bigger_is_better
 
     for config_id in sorted(ar.runs.keys(), reverse=True):
+        logger.info("Loading trajectories for {}".format(config_id))
         all_losses[config_id] = load_trajectories(
             ar.runs[config_id],
             time_col,
@@ -245,8 +249,9 @@ def main():
             bigger_is_better
         )
 
-    plot_losses(all_losses, ar.config['plot']['title'], show=True)
+    plot_losses(all_losses, ar.config.plot.title, show=True)
 
 
 if __name__ == "__main__":
+    logger.setLevel(logging.INFO)
     main()

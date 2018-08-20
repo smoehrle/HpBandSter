@@ -4,8 +4,10 @@ import logging
 import os
 import pickle
 import re
+from typing import List
 
 import config
+from models import Experiment, Plot
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -14,7 +16,7 @@ logger.setLevel(logging.INFO)
 class AggregatedResults():
     def __init__(self):
         self.runs = dict()
-        self.config = dict()
+        self.config: Experiment = None
 
     def load_run(self, config_id, filename):
         if config_id not in self.runs:
@@ -39,14 +41,30 @@ class AggregatedResults():
 
         return matched_filenames
 
+    def dump(self, filename):
+        with open(filename, 'wb') as fh:
+            logger.info("Write file to {}".format(filename))
+            pickle.dump(self, fh)
+
+
     @staticmethod
     def load(filename):
         if not os.path.isfile(filename):
             raise Exception("Could not find file {}".format(filename))
 
         with open(filename, 'rb') as file_:
-            logger.info("Loading file")
+            logger.info("Loading file: {}".format(filename))
             ar = pickle.load(file_)
+
+        # Fix for aro files where config was a dict
+        if type(ar.config) == dict:
+            c = ar.config
+            del c['strategies']
+            del c['problems']
+            c['runs'] = []
+            plot = Plot(**c.pop('plot'))
+            ar.config = Experiment(working_dir='', run_id='', plot=plot, **c)
+
         return ar
 
 
@@ -88,10 +106,7 @@ def create(args):
     matched_filenames = ar.find_runs(args.filter, args.directory)
 
     filename = args.out_name if args.out_name else 'aro.{}.pkl'.format(args.filter)
-    result_filename = os.path.join(args.directory, filename)
-    with open(result_filename, 'wb') as fh:
-        logger.info("Write file to {}".format(result_filename))
-        pickle.dump(ar, fh)
+    ar.dump(os.path.join(args.directory, filename))
 
     if args.clean:
         _remove_files(matched_filenames)
@@ -104,10 +119,7 @@ def add(args):
     ar = AggregatedResults.load(filename)
 
     matched_filenames = ar.find_runs(args.filter, args.directory)
-
-    with open(filename, 'wb') as fh:
-        logger.info("Write file to {}".format(filename))
-        pickle.dump(ar, fh)
+    ar.dump(filename)
 
     if args.clean:
         _remove_files(matched_filenames)
@@ -174,7 +186,7 @@ def _add_parser():
     return parser
 
 
-def _load_config(args):
+def _load_config(args) -> Experiment:
     if args.config:
         config_ = os.path.join(args.directory, args.config)
     else:
@@ -186,10 +198,10 @@ def _load_config(args):
             raise Exception("Multiple *.yml files found. Please specify one")
         config_ = configs[0]
 
-    return config.load_yaml(config_)
+    return config.load(config_, "", False)
 
 
-def _remove_files(files):
+def _remove_files(files: List[str]) -> None:
     logger.info("Clean up files")
     for filename in files:
         os.remove(filename)
