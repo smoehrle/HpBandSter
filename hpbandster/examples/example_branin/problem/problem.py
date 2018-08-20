@@ -12,6 +12,7 @@ class Problem:
     """
     def __init__(self):
         self._run = None
+        self._run_id = -1
         self._fidelity_space_cache = None
 
     def __repr__(self):
@@ -47,19 +48,21 @@ class Problem:
         self._fidelity_space_cache = (config, fid_space)
         return fid_space
 
-    def fidelity_config(self,
-                        config: CS.Configuration, config_id: Tuple[int, int, int],
-                        fidelity_values: Optional[Dict] = None,
-                        fidelity_vector: Optional[np.ndarray] = None):
+    def fidelity_config(
+            self,
+            config: CS.Configuration, config_id: Tuple[int, int, int],
+            fidelity_values: Optional[Dict] = None,
+            fidelity_vector: Optional[np.ndarray] = None):
         fid_space = self.fidelity_space(config, config_id)
-        fid_config = CS.Configuration(fid_space,
-                                      vector=fidelity_vector,
-                                      values=fidelity_values)
+        fid_config = CS.Configuration(
+            fid_space,
+            vector=fidelity_vector,
+            values=fidelity_values)
         return fid_config
 
-    def loss(self, config: CS.Configuration, config_id: Tuple[int, int, int],
-             fidelities: CS.Configuration)\
-        -> Tuple[float, Dict[str, str]]:
+    def loss(
+            self, config: CS.Configuration, config_id: Tuple[int, int, int],
+            fidelities: CS.Configuration) -> Tuple[float, Dict[str, str]]:
         """
         Calculate the loss for given configuration and fidelities
 
@@ -83,6 +86,14 @@ class Problem:
     @run.setter
     def run(self, value: Run):
         self._run = value
+
+    @property
+    def run_id(self) -> int:
+        return self._run_id
+
+    @run_id.setter
+    def run_id(self, value: int):
+        self._run_id = value
 
     def build_fidelity_space(self,
                              config: CS.Configuration,
