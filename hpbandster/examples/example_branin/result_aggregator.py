@@ -63,7 +63,8 @@ class AggregatedResults():
             del c['problems']
             c['runs'] = []
             plot = Plot(**c.pop('plot'))
-            ar.config = Experiment(working_dir='', run_id='', plot=plot, **c)
+            wd = os.path.dirname(os.path.abspath(filename))
+            ar.config = Experiment(working_dir=wd, job_id='', plot=plot, **c)
 
         return ar
 

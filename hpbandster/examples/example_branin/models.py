@@ -6,15 +6,15 @@ from hpbandster.core.master import Master
 
 
 class Experiment(namedtuple('ExperimentBase',
-        ['num_hb_runs', 'num_runs', 'runs', 'working_dir', 'run_id', 'plot', 'min_budget', 'max_budget', 'offset'])):
+        ['num_hb_runs', 'num_runs', 'runs', 'working_dir', 'job_id', 'plot', 'min_budget', 'max_budget', 'offset', 'eta'])):
     __slots__ = ()
 
     def __init__(self, *args, runs: List['Run'], **kwargs):
         for r in runs:
             r.experiment = self
 
-    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, plot, min_budget=9, max_budget=243, offset=0):
-        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, run_id, plot, min_budget, max_budget, offset)
+    def __new__(cls, num_hb_runs, num_runs, runs, working_dir, job_id, plot, min_budget=9, max_budget=243, offset=0, eta=3):
+        return super().__new__(cls, num_hb_runs, num_runs, runs, working_dir, job_id, plot, min_budget, max_budget, offset, eta)
     """
     Contains all configuration parameters which are not
     specific for a single run.
@@ -30,6 +30,11 @@ class Experiment(namedtuple('ExperimentBase',
         Tuple of run configurations in the format (name, config)
     working_dir :
         Location where the result pickles are saved to
+    job_id :
+        Unique id for this job. Used as nameserver name or as part of a seed which
+        should be different every run
+    plot :
+        Plot object with parameters for plotting
     min_budget :
         Minimum budget given to each configuration (default: 9)
     max_budget :
@@ -37,6 +42,8 @@ class Experiment(namedtuple('ExperimentBase',
     offset :
         Offset for the result pickle name. If you already have 10
         results set this value to 10. Then the next run will be #11
+    eta :
+        Eta parameter for hyperband (default: 3)
     """
     # NamedTuple with type hints and default values are not supported by Python 3.5
     # # Mandatory config values
