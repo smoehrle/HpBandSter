@@ -42,7 +42,7 @@ def load(file_path: str, job_id: str, load_runs_: bool=True) -> Experiment:
     else:
         del dict_['runs']
     plot = Plot(**dict_.pop('plot'))
-    return Experiment(runs=runs, run_id=job_id, plot=plot, **dict_)
+    return Experiment(runs=runs, job_id=job_id, plot=plot, **dict_)
 
 
 def load_yaml(file_path):

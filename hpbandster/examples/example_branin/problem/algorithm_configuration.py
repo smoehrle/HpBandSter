@@ -41,6 +41,8 @@ datasets = {
 class AlgorithmConfiguration(Problem):
     """
     """
+    dataset_cache = dict()
+
     def __init__(self, tarfile, dataset_name):
         super().__init__()
         self.logger = logging.getLogger(__name__)
@@ -54,11 +56,18 @@ class AlgorithmConfiguration(Problem):
 
         self.logger.debug("___AC_INIT___")
 
-        with tar.open(tarfile, 'r:gz') as archive:
-            with archive.extractfile(self.dataset.filename) as f:
-                self.num_configs = len(f.readline().decode().split(',')) - 1
-                f.seek(0)
-                self.instance_config_result_matix = np.loadtxt(f, delimiter=',', usecols=range(1, self.num_configs+1))
+        if self.dataset_name in self.dataset_cache:
+            self.logger.debug("Dataset cache hit")
+            self.instance_config_result_matix = self.dataset_cache[self.dataset_name]
+            self.num_configs = self.instance_config_result_matix.shape[1]
+        else:
+            self.logger.debug("Dataset cache miss")
+            with tar.open(tarfile, 'r:gz') as archive:
+                with archive.extractfile(self.dataset.filename) as f:
+                    self.num_configs = len(f.readline().decode().split(',')) - 1
+                    f.seek(0)
+                    self.instance_config_result_matix = np.loadtxt(f, delimiter=',', usecols=range(1, self.num_configs+1))
+                self.dataset_cache[self.dataset_name] = self.instance_config_result_matix
         self.num_instances = self.instance_config_result_matix.shape[0]
 
         # Fix outlier
