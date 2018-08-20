@@ -13,7 +13,7 @@ from models import Run, Experiment
 
 def parse_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='HpBandSter branin toy function example.')
-    parser.add_argument('--run-id', help='unique id to identify the HPB run.',
+    parser.add_argument('--job-id', help='unique id to identify the job.',
                         default='HPB_branin', type=str)
     parser.add_argument('--task-id', help='task id to identify the run.',
                         type=int)
@@ -38,7 +38,7 @@ def start_worker(
         host: Optional[str] = None,
         background: bool = False) -> None:
 
-    w = SimM2FWorker(run, cfg.max_budget, run_id=cfg.run_id, host=host)
+    w = SimM2FWorker(run, cfg.max_budget, run_id=cfg.job_id, host=host)
 
     assert cfg.working_dir is not None, "Need working_dir to load nameserver credentials."
     w.load_nameserver_credentials(cfg.working_dir)
@@ -50,10 +50,10 @@ def run_master(pickle_name: str, ns: hpns.NameServer, cfg: Experiment, run: Run)
     config_space = run.problem.build_config_space()
     hb = run.optimizer_class(
         configspace=config_space,
-        run_id=cfg.run_id,
+        run_id=cfg.job_id,
         min_budget=cfg.min_budget,
         max_budget=cfg.max_budget,
-        eta=3,
+        eta=cfg.eta,
         host=ns.host,
         nameserver=ns.host,
         nameserver_port=ns.port,
@@ -75,8 +75,8 @@ def main():
     logger = logging.getLogger()
     args = parse_cli()
     # Fix nameserver colision on cluster
-    run_id_combined = args.run_id + str(args.task_id) if args.task_id else args.run_id
-    cfg = config.load(args.config, run_id_combined)
+    job_id_combined = args.job_id + str(args.task_id) if args.task_id else args.job_id
+    cfg = config.load(args.config, job_id_combined)
     logger.info(cfg)
 
     if not args.master and not args.worker:
@@ -85,7 +85,7 @@ def main():
 
     # start name server
     if args.master:
-        ns = hpns.NameServer(run_id=cfg.run_id, nic_name=args.nic_name, working_directory=cfg.working_dir)
+        ns = hpns.NameServer(run_id=cfg.job_id, nic_name=args.nic_name, working_directory=cfg.working_dir)
         ns.start()
 
     runs = [(i, run) for run in cfg.runs for i in range(cfg.num_runs)]
