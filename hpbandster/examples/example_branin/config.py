@@ -40,6 +40,7 @@ def load(file_path: str, job_id: str, load_runs_: bool=True) -> Experiment:
     if load_runs_:
         runs = load_runs(dict_.pop('runs'), strategies, problems)
     else:
+        runs = []
         del dict_['runs']
     plot = Plot(**dict_.pop('plot'))
     return Experiment(runs=runs, job_id=job_id, plot=plot, **dict_)

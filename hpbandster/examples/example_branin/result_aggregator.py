@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 class AggregatedResults():
     def __init__(self):
         self.runs = dict()
-        self.config: Experiment = None
+        self.config = None
 
     def load_run(self, config_id, filename):
         if config_id not in self.runs:
