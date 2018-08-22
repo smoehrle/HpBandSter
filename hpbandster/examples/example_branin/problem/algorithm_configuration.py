@@ -145,7 +145,7 @@ class AlgorithmConfiguration(Problem):
     def build_fidelity_space(self, config, config_id) -> CS.ConfigurationSpace:
         cs = CS.ConfigurationSpace()
         cs.add_hyperparameters([
-            CS.UniformIntegerHyperparameter('n_instances', lower=0, upper=self.num_instances),
+            CS.UniformIntegerHyperparameter('n_instances', lower=1, upper=self.num_instances),
             CS.UniformFloatHyperparameter('cutoff', lower=self.min_cutoff, upper=self.dataset.max_cutoff),
         ])
         return cs

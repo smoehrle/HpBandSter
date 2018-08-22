@@ -18,7 +18,6 @@ class SimM2FWorker(Worker):
             self,
             run_config: Run,
             run_id2: int,
-            max_budget: float,
             *args, **kwargs):
         """
         Initialize the SimM2FWorker with a problem instance and a fidelity strategy
@@ -30,8 +29,6 @@ class SimM2FWorker(Worker):
         run_id2 :
             The actual run_id. run_id is used by the worker which is actual the job_id
             this run_id indicates the repetition of the given run_config
-        max_budget :
-            The highest possible budget
         args*, kqargs*:
             Worker parameter
         """
@@ -39,7 +36,6 @@ class SimM2FWorker(Worker):
         super().__init__(*args, **kwargs)
         self.run_config = run_config
         run_config.problem.run_id = run_id2
-        self.max_budget = max_budget
 
     def compute(self, config: CS.ConfigurationSpace, budget: float,
                 config_id: Tuple[int, int, int], *args, **kwargs) -> dict:
@@ -62,7 +58,10 @@ class SimM2FWorker(Worker):
         """
         time.sleep(0.01)
 
-        norm_budget = util.normalize_budget(budget, self.max_budget)
+        norm_budget = util.normalize_budget(
+            budget,
+            self.run_config.experiment.min_budget,
+            self.run_config.experiment.max_budget)
         z, strat_info = self.run_config.strategy.calc_fidelities(norm_budget, config, config_id)
         fid_config = self.run_config.problem.fidelity_config(config, config_id, fidelity_vector=z)
         cost = self.run_config.problem.cost(config, config_id, fidelity_config=fid_config)

@@ -77,7 +77,7 @@ def handle_config_file(filename):
         configs = [cs.sample_configuration() for _ in range(num_configs)]
         # Iterate all budgets
         for j, b in enumerate(budgets):
-            norm_budget = util.normalize_budget(b, budgets[-1])
+            norm_budget = util.normalize_budget(b, budgets[0], budgets[-1])
 
             # Iterate all configurations
             for k, c in enumerate(configs):
