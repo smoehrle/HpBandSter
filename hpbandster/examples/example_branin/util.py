@@ -123,5 +123,5 @@ def log_results(res: Result, *, simulate_time: bool) -> dict:
     return incumbent_trajectory
 
 
-def normalize_budget(budget: float, max_budget: float) -> float:
-    return budget / max_budget
+def normalize_budget(budget: float, min_budget: float, max_budget: float) -> float:
+    return (budget - min_budget) / (max_budget - min_budget)
