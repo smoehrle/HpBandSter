@@ -80,6 +80,7 @@ def main():
     add_parser = _add_parser()
     info_parser = _info_parser()
     delete_parser = _delete_parser()
+    rename_parser = _rename_parser()
 
     # Add actions
     sp = parser.add_subparsers()
@@ -90,21 +91,27 @@ def main():
     sp_add = sp.add_parser(
         'add',
         parents=[add_parser],
-        help='Add results to an existing aggregated result object')
+        help='Add results')
     sp_info = sp.add_parser(
         'info',
         parents=[info_parser],
-        help='Show information about the aggregated result object')
+        help='Show information')
     sp_delete = sp.add_parser(
         'delete',
         parents=[delete_parser],
-        help='Delete one or more config_ids from the aggregated result object')
+        help='Delete one or more config_ids')
+    sp_rename = sp.add_parser(
+        'rename',
+        parents=[rename_parser],
+        help='Rename a config_id')
+
 
     # Hook subparsers up to functions
     sp_create.set_defaults(func=create)
     sp_add.set_defaults(func=add)
     sp_info.set_defaults(func=info)
     sp_delete.set_defaults(func=delete)
+    sp_rename.set_defaults(func=rename)
 
     args = parser.parse_args()
     if 'func' in args:
@@ -157,6 +164,21 @@ def delete(args):
             del ar.runs[config_id]
         else:
             logger.warning("Config id {} not found".format(config_id))
+    ar.dump(args.object)
+
+
+def rename(args):
+    ar = AggregatedResults.load(args.object)
+
+    if args.old_id in ar.runs.keys():
+        logger.info("Rename {} to {}".format(args.old_id, args.new_id))
+
+        tmp = ar.runs[args.old_id]
+        del ar.runs[args.old_id]
+        ar.runs[args.new_id] = tmp
+    else:
+        logger.warning("Old config id {} not found".format(args.old_id))
+
     ar.dump(args.object)
 
 
@@ -245,6 +267,28 @@ def _delete_parser():
         metavar='id',
         nargs='+',
         help='Config ids which should be deleted')
+
+    return parser
+
+
+def _rename_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-o',
+        '--object',
+        help='Aggregated results object',
+        type=str,
+        required=True)
+    parser.add_argument(
+        '--old_id',
+        help='The old config id',
+        type=str,
+        required=True)
+    parser.add_argument(
+        '--new_id',
+        help='The new config id',
+        type=str,
+        required=True)
 
     return parser
 
