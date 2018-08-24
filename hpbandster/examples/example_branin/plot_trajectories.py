@@ -16,104 +16,6 @@ from result_aggregator import AggregatedResults
 logger = logging.getLogger(__name__)
 
 
-def extract_result(results_object, bigger_is_better):
-    """
-        Returns the best configurations over time, but also returns the cummulative budget
-
-        Parameters:
-        -----------
-            result_object:
-                HyperBand result object
-
-            bigger_is_better: bool
-                If set to true then a run with a bigger budget is always considered better than
-                the current best run with a lower budget
-
-                If set to false a run is considered better only if the budget is equal or greater
-                and the loss is smaller
-
-        Returns:
-        --------
-            dict:
-                dictionary with all the config IDs, the times the runs
-                finished, their respective budgets, and corresponding losses
-    """
-    all_runs = results_object.get_all_runs(only_largest_budget=False)
-    all_runs.sort(key=lambda r: r.time_stamps['finished'])
-
-    return_dict = {
-        'config_ids': [],
-        'times_finished': [],
-        'budgets': [],
-        'losses': [],
-        'info': [],
-        'test_losses': [],
-        'cummulative_budget': [],
-        'cummulative_cost': []
-    }
-
-    cummulative_budget = 0
-    cummulative_cost = 0
-    current_incumbent = float('inf')
-    incumbent_budget = -float('inf')
-
-    for r in all_runs:
-
-        cummulative_budget += r.budget
-        try:
-            cummulative_cost += r.info['cost']
-        except:
-            pass
-
-        if r.loss is None:
-            continue
-
-        if bigger_is_better:
-            is_better = r.budget > incumbent_budget or (r.budget == incumbent_budget and r.loss < current_incumbent)
-        else:
-            is_better = r.budget >= incumbent_budget and r.loss < current_incumbent
-
-        if is_better:
-            current_incumbent = r.loss
-            incumbent_budget = r.budget
-
-            return_dict['config_ids'].append(r.config_id)
-            return_dict['times_finished'].append(r.time_stamps['finished'])
-            return_dict['budgets'].append(r.budget)
-            return_dict['losses'].append(r.loss)
-            return_dict['cummulative_budget'].append(cummulative_budget)
-            return_dict['cummulative_cost'].append(cummulative_cost)
-            try:
-                return_dict['test_losses'].append(r.info['test_loss'])
-            except:
-                pass
-
-    if current_incumbent != r.loss:
-        r = all_runs[-1]
-
-        return_dict['config_ids'].append(return_dict['config_ids'][-1])
-        return_dict['times_finished'].append(r.time_stamps['finished'])
-        return_dict['budgets'].append(return_dict['budgets'][-1])
-        return_dict['losses'].append(return_dict['losses'][-1])
-        return_dict['cummulative_budget'].append(cummulative_budget)
-        return_dict['cummulative_cost'].append(cummulative_cost)
-        try:
-            return_dict['test_losses'].append(return_dict['test_losses'][-1])
-        except:
-            pass
-
-    return_dict['configs'] = {}
-
-    id2conf = results_object.get_id2config_mapping()
-
-    for c in return_dict['config_ids']:
-        return_dict['configs'][c] = id2conf[c]
-
-    return_dict['HB_config'] = results_object.HB_config
-
-    return (return_dict)
-
-
 def fill_trajectories(pandas_data_frame):
     # forward fill to make it a propper step function
     df = pandas_data_frame.fillna(method='ffill')
@@ -192,8 +94,7 @@ def plot_losses(incumbent_trajectories, title, regret=True, incumbent=None,
 
 def load_trajectories(runs, time_col: str, value_col: str, bigger_is_better: bool):
     df = pd.DataFrame()
-    for i, run in enumerate(runs):
-        datum = extract_result(run, bigger_is_better)
+    for i, datum in enumerate(runs):
         times = np.array(datum[time_col])
         tmp = pd.DataFrame({str(i): datum[value_col]}, index=times)
         df = df.join(tmp, how='outer')
