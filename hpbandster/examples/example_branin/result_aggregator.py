@@ -31,12 +31,14 @@ class AggregatedResults():
         config_id_regex = re.compile(r"results\.{}-(.+)-[0-9]+\.pkl".format(filter_))
 
         matched_filenames = []
+        cnt = 0
 
         for filename in glob.glob(os.path.join(directory, "results.{}*pkl".format(filter_))):
             match = config_id_regex.search(filename)
             if match:
+                cnt += 1
                 matched_filenames.append(filename)
-                logger.debug("Found file: {}".format(filename))
+                logger.debug("Found file ({}): {}".format(cnt, filename))
                 self.load_run(match.group(1), filename)
 
         return matched_filenames
@@ -75,6 +77,7 @@ def main():
 
     create_parser = _create_parser()
     add_parser = _add_parser()
+    info_parser = _info_parser()
 
     # Add actions
     sp = parser.add_subparsers()
@@ -86,10 +89,15 @@ def main():
         'add',
         parents=[add_parser],
         help='Add results to an existing aggregated result object')
+    sp_info = sp.add_parser(
+        'info',
+        parents=[info_parser],
+        help='Show informations about the aggregated result object')
 
     # Hook subparsers up to functions
     sp_create.set_defaults(func=create)
     sp_add.set_defaults(func=add)
+    sp_info.set_defaults(func=info)
 
     args = parser.parse_args()
     if 'func' in args:
@@ -124,6 +132,13 @@ def add(args):
 
     if args.clean:
         _remove_files(matched_filenames)
+
+
+def info(args):
+    ar = AggregatedResults.load(args.object)
+    print("Config ids:")
+    for config_id in ar.runs.keys():
+        print('\t', config_id, ':\t', len(ar.runs[config_id]))
 
 
 def _create_parser():
@@ -187,6 +202,18 @@ def _add_parser():
     return parser
 
 
+def _info_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        '-o',
+        '--object',
+        help='Aggregated results object',
+        type=str,
+        required=True)
+
+    return parser
+
+
 def _load_config(args) -> Experiment:
     if args.config:
         config_ = os.path.join(args.directory, args.config)
@@ -199,6 +226,7 @@ def _load_config(args) -> Experiment:
             raise Exception("Multiple *.yml files found. Please specify one")
         config_ = configs[0]
 
+    logger.info("Load config: {}".format(config_))
     return config.load(config_, "", False)
 
 
