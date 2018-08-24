@@ -79,6 +79,7 @@ def main():
     create_parser = _create_parser()
     add_parser = _add_parser()
     info_parser = _info_parser()
+    delete_parser = _delete_parser()
 
     # Add actions
     sp = parser.add_subparsers()
@@ -93,12 +94,17 @@ def main():
     sp_info = sp.add_parser(
         'info',
         parents=[info_parser],
-        help='Show informations about the aggregated result object')
+        help='Show information about the aggregated result object')
+    sp_delete = sp.add_parser(
+        'delete',
+        parents=[delete_parser],
+        help='Delete one or more config_ids from the aggregated result object')
 
     # Hook subparsers up to functions
     sp_create.set_defaults(func=create)
     sp_add.set_defaults(func=add)
     sp_info.set_defaults(func=info)
+    sp_delete.set_defaults(func=delete)
 
     args = parser.parse_args()
     if 'func' in args:
@@ -136,10 +142,22 @@ def add(args):
 
 
 def info(args):
+    for obj in args.objects:
+        ar = AggregatedResults.load(obj)
+        print("Config ids:")
+        for config_id in ar.runs.keys():
+            print('\t', config_id, ':\t', len(ar.runs[config_id]))
+
+
+def delete(args):
     ar = AggregatedResults.load(args.object)
-    print("Config ids:")
-    for config_id in ar.runs.keys():
-        print('\t', config_id, ':\t', len(ar.runs[config_id]))
+    for config_id in args.ids:
+        if config_id in ar.runs.keys():
+            logger.info("Delete {}".format(config_id))
+            del ar.runs[config_id]
+        else:
+            logger.warning("Config id {} not found".format(config_id))
+    ar.dump(args.object)
 
 
 def _create_parser():
@@ -206,11 +224,27 @@ def _add_parser():
 def _info_parser():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
+        'objects',
+        metavar='FILE',
+        nargs='+',
+        help='Aggregated results object')
+
+    return parser
+
+
+def _delete_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
         '-o',
         '--object',
         help='Aggregated results object',
         type=str,
         required=True)
+    parser.add_argument(
+        'ids',
+        metavar='id',
+        nargs='+',
+        help='Config ids which should be deleted')
 
     return parser
 
