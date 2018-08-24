@@ -168,7 +168,7 @@ def _create_parser():
         action='store_true')
     parser.add_argument(
         '--config',
-        help='Name or path relative to --directory for the config. Only necessary' +
+        help='Name or path relative to the current directory for the config. Only necessary' +
              'if there are multiple yml files or the yml file is in another directory',
         default=None)
 
@@ -217,7 +217,7 @@ def _info_parser():
 
 def _load_config(args) -> Experiment:
     if args.config:
-        config_ = os.path.join(args.directory, args.config)
+        config_ = args.config
     else:
         configs = [f for f in glob.glob(os.path.join(args.directory, "*.yml"))]
 
