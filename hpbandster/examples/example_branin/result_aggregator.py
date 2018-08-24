@@ -7,6 +7,7 @@ import re
 from typing import List
 
 import config
+import util
 from models import Experiment, Plot
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class AggregatedResults():
         with open(filename, 'rb') as file_:
             run = pickle.load(file_)
 
-        self.runs[config_id].append(run)
+        self.runs[config_id].append(util.extract_result(run, self.config.plot.bigger_is_better))
 
     def find_runs(self, filter_, directory):
         config_id_regex = re.compile(r"results\.{}-(.+)-[0-9]+\.pkl".format(filter_))
