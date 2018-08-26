@@ -31,7 +31,7 @@ class OpenMLClassification(Problem):
 
     def _random_state(self, config_id: Tuple[int, int, int]) -> np.random.RandomState:
         iteration, _, _ = config_id
-        intseq_run_id = list(map(ord, self.run.experiment.run_id))
+        intseq_run_id = list(map(ord, self.run.experiment.job_id))
         return np.random.RandomState([iteration] + intseq_run_id)
 
     def get_X_and_y(self, config_id: Tuple[int, int, int], fidelity_config: CS.Configuration):
