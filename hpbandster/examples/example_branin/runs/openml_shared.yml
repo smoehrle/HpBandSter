@@ -1,4 +1,3 @@
-extend: './shared.yml'
 num_hb_runs: 15
 num_runs: 256
 
@@ -6,28 +5,28 @@ strategies:
   full:
     class: 'FullFidelity'
   pb1:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [True, False, False]
   pb2:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [False, True, False]
   pb3:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [False, False, True]
   pball:
-    class: 'FidelityPropToBudget'
+    class: 'PropToBudget'
     use_fidelity: [True, True, True]
   pc1:
-    class: 'FidelityPropToCost'
+    class: 'PropToCost'
     use_fidelity: [True, False, False]
   pc2:
-    class: 'FidelityPropToCost'
+    class: 'PropToCost'
     use_fidelity: [False, True, False]
   pc3:
-    class: 'FidelityPropToCost'
+    class: 'PropToCost'
     use_fidelity: [False, False, True]
   pcall:
-    class: 'FidelityPropToCost'
+    class: 'PropToCost'
     use_fidelity: [True, True, True]
 
 runs:
